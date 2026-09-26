@@ -3,6 +3,8 @@ import {
   GameState,
   Player,
   PlayerAction,
+  ShowdownHandRank,
+  VisibleHandRank,
   evaluateShowdownHand,
   evaluateVisibleHand,
 } from '@soha/core';
@@ -23,7 +25,7 @@ export function decideBotAction(state: GameState, botPlayerId: string): PlayerAc
     // 25% chance to bet if we have pairs or better
     if (currentCards.length >= 2) {
       const vis = evaluateVisibleHand(bot.upcards);
-      if (vis.rankType >= 2 && Math.random() < 0.4) {
+      if (vis.rankType >= VisibleHandRank.ONE_PAIR && Math.random() < 0.4) {
         const betAmount = Math.max(state.lastRaiseDiff, state.ante * 2);
         return { type: 'BET', amount: betAmount };
       }
@@ -43,10 +45,10 @@ export function decideBotAction(state: GameState, botPlayerId: string): PlayerAc
   // If we have 5 cards, check showdown evaluation
   if (currentCards.length === 5) {
     const evalResult = evaluateShowdownHand(currentCards);
-    if (evalResult.rankType >= 3) { // Two pair or better
+    if (evalResult.rankType >= ShowdownHandRank.TWO_PAIR) { // Two pair or better
       return { type: 'CALL' };
     }
-    if (evalResult.rankType === 2 && potOdds < 0.35) { // One pair
+    if (evalResult.rankType === ShowdownHandRank.ONE_PAIR && potOdds < 0.35) { // One pair
       return { type: 'CALL' };
     }
     return Math.random() < 0.2 ? { type: 'CALL' } : { type: 'FOLD' };

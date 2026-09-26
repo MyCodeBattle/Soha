@@ -282,6 +282,16 @@ function advanceStreet(state: GameState): GameState {
   };
 }
 
+function commitBet(state: GameState, player: Player, amount: number) {
+  player.chips -= amount;
+  player.currentStreetBet += amount;
+  player.totalHandBet += amount;
+  state.pot += amount;
+  if (player.chips === 0 || player.totalHandBet >= state.effectiveCap) {
+    player.isAllIn = true;
+  }
+}
+
 export function applyAction(
   state: GameState,
   playerId: string,
@@ -344,16 +354,10 @@ export function applyAction(
         throw new Error('Bet amount must be positive');
       }
       const actualBet = Math.min(betAmount, maxPossibleAdd);
-      player.chips -= actualBet;
-      player.currentStreetBet += actualBet;
-      player.totalHandBet += actualBet;
-      next.pot += actualBet;
+      commitBet(next, player, actualBet);
       next.currentStreetMaxBet = actualBet;
       next.lastRaiseDiff = actualBet;
       next.lastAggressorIndex = next.activePlayerIndex;
-      if (player.chips === 0 || player.totalHandBet >= next.effectiveCap) {
-        player.isAllIn = true;
-      }
       next.actedInCurrentStreet = [playerId];
       break;
     }
@@ -364,13 +368,7 @@ export function applyAction(
         throw new Error('No bet to call; use CHECK instead');
       }
       const actualCall = Math.min(callDiff, maxPossibleAdd);
-      player.chips -= actualCall;
-      player.currentStreetBet += actualCall;
-      player.totalHandBet += actualCall;
-      next.pot += actualCall;
-      if (player.chips === 0 || player.totalHandBet >= next.effectiveCap) {
-        player.isAllIn = true;
-      }
+      commitBet(next, player, actualCall);
       if (!next.actedInCurrentStreet.includes(playerId)) {
         next.actedInCurrentStreet.push(playerId);
       }
@@ -390,10 +388,7 @@ export function applyAction(
       const newStreetBet = player.currentStreetBet + actualAdd;
       const raiseStep = newStreetBet - next.currentStreetMaxBet;
 
-      player.chips -= actualAdd;
-      player.currentStreetBet = newStreetBet;
-      player.totalHandBet += actualAdd;
-      next.pot += actualAdd;
+      commitBet(next, player, actualAdd);
       if (raiseStep > 0) {
         next.lastRaiseDiff = raiseStep;
         next.currentStreetMaxBet = newStreetBet;
@@ -404,20 +399,13 @@ export function applyAction(
           next.actedInCurrentStreet.push(playerId);
         }
       }
-      if (player.chips === 0 || player.totalHandBet >= next.effectiveCap) {
-        player.isAllIn = true;
-      }
       break;
     }
 
     case 'ALL_IN': {
       const allInAmount = maxPossibleAdd;
       const targetStreetBet = player.currentStreetBet + allInAmount;
-      player.chips -= allInAmount;
-      player.currentStreetBet = targetStreetBet;
-      player.totalHandBet += allInAmount;
-      next.pot += allInAmount;
-      player.isAllIn = true;
+      commitBet(next, player, allInAmount);
 
       if (targetStreetBet > next.currentStreetMaxBet) {
         const diff = targetStreetBet - next.currentStreetMaxBet;

@@ -46,6 +46,7 @@ export const CardView: React.FC<CardViewProps> = ({
   className = '',
 }) => {
   const [isPeeking, setIsPeeking] = useState(false);
+  const [privacyHidden, setPrivacyHidden] = useState(false);
 
   // Size configurations
   const sizeClasses = {
@@ -63,18 +64,26 @@ export const CardView: React.FC<CardViewProps> = ({
     );
   }
 
-  const isHidden = 'isHidden' in card;
+  const isHidden = 'isHidden' in card || (isHole && canPeek && privacyHidden && !isPeeking);
 
-  // Face down card (opponent's hole card)
+  // Face down card (opponent's hole card or privacy hidden)
   if (isHidden) {
     return (
       <div
-        className={`${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden ${className}`}
+        onClick={() => canPeek && setPrivacyHidden(false)}
+        onTouchStart={() => canPeek && setIsPeeking(true)}
+        onTouchEnd={() => canPeek && setIsPeeking(false)}
+        onMouseDown={() => canPeek && setIsPeeking(true)}
+        onMouseUp={() => canPeek && setIsPeeking(false)}
+        className={`${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${className}`}
       >
-        <div className="absolute inset-1 border border-indigo-300/30 rounded flex items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
+        <div className="absolute inset-1 border border-indigo-300/30 rounded flex flex-col items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
           <span className="text-indigo-300/60 font-serif font-black text-sm select-none">
             ♠
           </span>
+          {canPeek && (
+            <span className="text-[8px] text-amber-300 font-bold mt-1">按住偷瞄</span>
+          )}
         </div>
       </div>
     );
@@ -126,8 +135,17 @@ export const CardView: React.FC<CardViewProps> = ({
       </div>
 
       {canPeek && (
-        <div className="absolute -bottom-4 left-0 right-0 text-center text-[10px] text-gold-light/80 pointer-events-none">
-          {isPeeking ? '松开' : '长按偷瞄'}
+        <div className="flex items-center justify-center gap-1 mt-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setPrivacyHidden(!privacyHidden);
+            }}
+            className="text-[9px] text-amber-300 hover:text-amber-200 bg-slate-900/80 px-1.5 py-0.5 rounded border border-amber-500/30"
+          >
+            {privacyHidden ? '显示底牌' : '隐藏底牌'}
+          </button>
         </div>
       )}
     </div>

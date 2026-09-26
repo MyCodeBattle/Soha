@@ -208,16 +208,16 @@ export class Room {
 
   private syncStateToRoomPlayers() {
     if (!this.gameState) return;
-    for (const gp of this.gameState.players) {
-      const rp = this.players.find((p) => p.id === gp.id);
-      if (rp) {
-        rp.chips = gp.chips;
-        rp.isFolded = gp.isFolded;
-        rp.isAllIn = gp.isAllIn;
-        rp.upcards = gp.upcards;
-        rp.holeCard = gp.holeCard;
-        rp.currentStreetBet = gp.currentStreetBet;
-        rp.totalHandBet = gp.totalHandBet;
+    for (const gamePlayer of this.gameState.players) {
+      const roomPlayer = this.players.find((p) => p.id === gamePlayer.id);
+      if (roomPlayer) {
+        roomPlayer.chips = gamePlayer.chips;
+        roomPlayer.isFolded = gamePlayer.isFolded;
+        roomPlayer.isAllIn = gamePlayer.isAllIn;
+        roomPlayer.upcards = gamePlayer.upcards;
+        roomPlayer.holeCard = gamePlayer.holeCard;
+        roomPlayer.currentStreetBet = gamePlayer.currentStreetBet;
+        roomPlayer.totalHandBet = gamePlayer.totalHandBet;
       }
     }
   }
@@ -285,7 +285,10 @@ export class Room {
 
   getPlayerView(playerId: string): RoomView {
     const isPlaying = this.status === 'PLAYING' && !!this.gameState;
-    const isShowdown = this.gameState?.street === 'HAND_ENDED';
+    // Rule 15: If all other players folded, the winner does NOT show hole card.
+    // Hole cards are only revealed when 2+ players reach showdown!
+    const nonFoldedCount = this.gameState ? this.gameState.players.filter((p) => !p.isFolded).length : 0;
+    const isShowdown = this.gameState?.street === 'HAND_ENDED' && nonFoldedCount > 1;
 
     const viewPlayers: RoomViewPlayer[] = this.players.map((p) => {
       let holeCard: Card | { isHidden: true } | undefined = undefined;

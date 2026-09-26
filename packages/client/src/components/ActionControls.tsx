@@ -156,8 +156,9 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
 
         {/* SHOW HAND / ALL IN */}
         <button
+          disabled={!options.canAllIn}
           onClick={() => handleAction({ type: 'ALL_IN' })}
-          className="flex flex-col items-center justify-center py-2.5 px-2 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-400 text-slate-950 font-black rounded-xl transition active:scale-95 text-xs sm:text-sm shadow-lg shadow-amber-500/20 border border-yellow-300 animate-pulse"
+          className="flex flex-col items-center justify-center py-2.5 px-2 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:from-amber-500 hover:to-yellow-400 disabled:opacity-40 text-slate-950 font-black rounded-xl transition active:scale-95 text-xs sm:text-sm shadow-lg shadow-amber-500/20 border border-yellow-300 animate-pulse"
         >
           <Flame className="w-4 h-4 mb-0.5 text-slate-950 fill-current" />
           <span>梭哈!</span>

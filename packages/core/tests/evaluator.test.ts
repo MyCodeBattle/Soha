@@ -35,10 +35,20 @@ describe('Visible Hand Evaluator (1-4 Upcards for Initiative Order)', () => {
     // AA with spade > AA with heart
     expect(compareVisibleHands(pairA_spade, pairA_heart)).toBeGreaterThan(0);
 
+    // K♠ K♦ 2♣ vs K♥ K♣ A♠: King pair with ♠K beats King pair with ♥K, kicker A♠ does NOT override the pair's suit!
+    const pairK_spade_lowKicker = [card('spades', 13), card('diamonds', 13), card('clubs', 2)];
+    const pairK_heart_highKicker = [card('hearts', 13), card('clubs', 13), card('spades', 14)];
+    expect(compareVisibleHands(pairK_spade_lowKicker, pairK_heart_highKicker)).toBeGreaterThan(0);
+
     const akSpade = [card('spades', 14), card('hearts', 13)];
     const aqSpade = [card('spades', 14), card('hearts', 12)];
     // AK > AQ
     expect(compareVisibleHands(akSpade, aqSpade)).toBeGreaterThan(0);
+
+    // A♠ 8♥ vs A♦ 9♠: A♠ acts before A♦, 9 kicker does not override the Ace's suit!
+    const aSpade8 = [card('spades', 14), card('hearts', 8)];
+    const aDiamond9 = [card('diamonds', 14), card('spades', 9)];
+    expect(compareVisibleHands(aSpade8, aDiamond9)).toBeGreaterThan(0);
   });
 
   it('Round 3 (3 cards): Three of a kind > Pair > High card', () => {

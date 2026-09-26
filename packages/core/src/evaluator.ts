@@ -108,16 +108,26 @@ export function compareVisibleHands(cardsA: Card[], cardsB: Card[]): number {
     return evalA.rankType - evalB.rankType;
   }
 
-  // Compare tiebreaker ranks in order
+  // First compare primary combination rank (e.g. King in KK, Ace in Ace-high)
+  if (evalA.tieBreakerRanks[0] !== evalB.tieBreakerRanks[0]) {
+    return evalA.tieBreakerRanks[0] - evalB.tieBreakerRanks[0];
+  }
+
+  // When primary combination rank is equal, suit of the primary combination decides initiative!
+  // E.g. A♠ 8♥ beats A♦ 9♠; K♠ K♦ 2♣ beats K♥ K♣ A♠ (Rule 7: ♠ > ♥ > ♦ > ♣)
+  if (evalA.suitTieBreaker !== evalB.suitTieBreaker) {
+    return evalA.suitTieBreaker - evalB.suitTieBreaker;
+  }
+
+  // Compare remaining kickers if any
   const len = Math.min(evalA.tieBreakerRanks.length, evalB.tieBreakerRanks.length);
-  for (let i = 0; i < len; i++) {
+  for (let i = 1; i < len; i++) {
     if (evalA.tieBreakerRanks[i] !== evalB.tieBreakerRanks[i]) {
       return evalA.tieBreakerRanks[i] - evalB.tieBreakerRanks[i];
     }
   }
 
-  // If ranks are equal, break tie using suit order (♠ > ♥ > ♦ > ♣)
-  return evalA.suitTieBreaker - evalB.suitTieBreaker;
+  return 0;
 }
 
 /**
