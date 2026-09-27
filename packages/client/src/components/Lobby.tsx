@@ -31,7 +31,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black text-slate-100 flex flex-col justify-between p-4 sm:p-6">
+    <div className="lobby-page min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black text-slate-100 flex flex-col justify-between p-4 sm:p-6">
       {/* Top Bar */}
       <header className="flex items-center justify-between max-w-4xl w-full mx-auto">
         <div className="flex items-center gap-2">
@@ -65,9 +65,9 @@ export const Lobby: React.FC<LobbyProps> = ({
       </header>
 
       {/* Main Container */}
-      <main className="max-w-md w-full mx-auto my-auto flex flex-col gap-6 py-6">
+      <main className="lobby-main max-w-md w-full mx-auto my-auto flex flex-col gap-6 py-6">
         {/* Nickname Card */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
+        <div className="nickname-panel bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
           <label className="block text-xs font-semibold text-slate-400 mb-2">
             你的昵称
           </label>
@@ -82,13 +82,13 @@ export const Lobby: React.FC<LobbyProps> = ({
         </div>
 
         {error && (
-          <div className="bg-rose-950/60 border border-rose-800/80 text-rose-200 px-4 py-2.5 rounded-xl text-xs text-center font-medium">
+          <div className="lobby-error bg-rose-950/60 border border-rose-800/80 text-rose-200 px-4 py-2.5 rounded-xl text-xs text-center font-medium">
             {error}
           </div>
         )}
 
         {/* Action Panels */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="lobby-actions grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Create Room */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm flex flex-col justify-between gap-4">
             <div>

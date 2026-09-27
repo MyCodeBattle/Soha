@@ -60,7 +60,7 @@ export const CardView: React.FC<CardViewProps> = ({
     // Empty card slot placeholder
     return (
       <div
-        className={`${sizeClasses} border-2 border-dashed border-emerald-900/60 bg-emerald-950/20 flex items-center justify-center ${className}`}
+        className={`poker-card ${sizeClasses} border-2 border-dashed border-emerald-900/60 bg-emerald-950/20 flex items-center justify-center ${className}`}
       />
     );
   }
@@ -76,7 +76,7 @@ export const CardView: React.FC<CardViewProps> = ({
         onTouchEnd={() => canPeek && setIsPeeking(false)}
         onMouseDown={() => canPeek && setIsPeeking(true)}
         onMouseUp={() => canPeek && setIsPeeking(false)}
-        className={`${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${className}`}
+        className={`poker-card ${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${className}`}
       >
         <div className="absolute inset-1 border border-indigo-300/30 rounded flex flex-col items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
           <span className="text-indigo-300/60 font-serif font-black text-sm select-none">
@@ -106,7 +106,7 @@ export const CardView: React.FC<CardViewProps> = ({
       onTouchEnd={() => canPeek && setIsPeeking(false)}
     >
       <div
-        className={`${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold`}
+        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold`}
       >
         {/* Top-left rank and suit */}
         <div className={`leading-none flex flex-col items-center ${suitColor}`}>

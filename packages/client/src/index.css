@@ -47,3 +47,435 @@ body {
   .folded-cards { transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1); }
   .folded-cards.is-folded { transform: none; }
 }
+
+.rotate-notice {
+  display: none;
+}
+
+@media (orientation: portrait) and (max-width: 600px) and (hover: none) and (pointer: coarse) {
+  .app-content {
+    display: none;
+  }
+
+  .rotate-notice {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
+    background: radial-gradient(circle at 50% 35%, #123e2b, #030712 70%);
+    color: #f8fafc;
+    text-align: center;
+  }
+
+  .rotate-notice-icon {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border: 2px solid #fbbf24;
+    border-radius: 18px;
+    color: #fbbf24;
+    font-size: 48px;
+    line-height: 1;
+    transform: rotate(90deg);
+  }
+
+  .rotate-notice h1 {
+    font-size: 22px;
+    font-weight: 800;
+  }
+
+  .rotate-notice p {
+    color: #cbd5e1;
+    font-size: 14px;
+  }
+}
+
+/* Width breakpoints alone enlarge cards on a phone held sideways. */
+@media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
+  .app-content .lobby-page,
+  .app-content .table-page {
+    height: 100dvh;
+    min-height: 0;
+    padding: calc(4px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  }
+
+  .app-content .lobby-page {
+    overflow-y: auto;
+    gap: 4px;
+  }
+
+  .app-content .lobby-page > header,
+  .app-content .lobby-page > footer {
+    flex: none;
+  }
+
+  .app-content .lobby-page > footer {
+    padding: 2px 0;
+    font-size: 10px;
+  }
+
+  .app-content .lobby-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+    max-width: 900px;
+    margin: auto;
+    padding: 4px 0;
+  }
+
+  .app-content .nickname-panel,
+  .app-content .lobby-actions > div {
+    padding: 10px;
+  }
+
+  .app-content .lobby-error {
+    grid-column: 1 / -1;
+  }
+
+  .app-content .lobby-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .app-content .lobby-actions > div {
+    gap: 8px;
+  }
+
+  .app-content .lobby-actions p {
+    line-height: 1.25;
+  }
+
+  .app-content .rules-overlay {
+    padding: calc(6px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+  }
+
+  .app-content .rules-panel {
+    max-width: 720px;
+    max-height: 100%;
+  }
+
+  .app-content .rules-panel > :first-child,
+  .app-content .rules-panel > :last-child {
+    flex: none;
+    padding: 8px 12px;
+  }
+
+  .app-content .rules-panel > :nth-child(2) {
+    min-height: 0;
+    padding: 10px 12px;
+  }
+
+  .app-content .table-page {
+    overflow: hidden;
+    gap: 3px;
+  }
+
+  .app-content .table-header {
+    flex: none;
+    min-height: 30px;
+    padding: 2px 6px;
+  }
+
+  .app-content .table-header > div {
+    gap: 4px;
+  }
+
+  .app-content .table-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+  }
+
+  .app-content .felt-table {
+    height: 100%;
+    min-height: 0;
+    border-width: 6px;
+    border-radius: 32px;
+    padding: 4px 8px;
+  }
+
+  .app-content .felt-table > :first-child {
+    inset: 4px;
+    border-radius: 26px;
+  }
+
+  .app-content .opponents-row {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-around;
+    gap: 2px;
+  }
+
+  .app-content .opponent-seat {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 2px;
+    border-radius: 10px;
+  }
+
+  .app-content .opponent-seat > :first-child,
+  .app-content .opponent-seat > :nth-child(2) {
+    gap: 2px;
+    margin-bottom: 1px;
+    font-size: 9px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .app-content .opponent-seat svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .app-content .opponent-seat > :nth-child(2) span {
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .app-content .opponents-row[data-opponent-count="4"] .opponent-seat > :nth-child(2),
+  .app-content .opponents-row[data-opponent-count="5"] .opponent-seat > :nth-child(2) {
+    align-self: flex-start;
+    padding-left: 3px;
+  }
+
+  .app-content .opponent-seat > :first-child span {
+    max-width: 48px;
+  }
+
+  .app-content .opponent-seat > :last-child {
+    position: absolute;
+    top: 13px;
+    right: 2px;
+    margin-top: 0;
+    line-height: 1;
+  }
+
+  .app-content .opponent-seat > :last-child:empty {
+    display: none;
+  }
+
+  .app-content .opponent-rank {
+    position: absolute;
+    top: 1px;
+    right: 2px;
+    max-width: 48px;
+    margin-top: 0;
+    overflow: hidden;
+    padding: 0 2px;
+    font-size: 8px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-content .opponent-cards {
+    gap: 0;
+  }
+
+  .app-content .opponent-cards > :not(:first-child) {
+    margin-left: -5px;
+  }
+
+  .app-content .opponent-cards .poker-card {
+    width: 20px;
+    height: 30px;
+    padding: 2px;
+    font-size: 9px;
+  }
+
+  .app-content .opponents-row[data-opponent-count="1"] .poker-card,
+  .app-content .opponents-row[data-opponent-count="2"] .poker-card {
+    width: clamp(22px, 7dvh, 28px);
+    height: clamp(30px, 9dvh, 40px);
+  }
+
+  .app-content .opponents-row[data-opponent-count="3"] .poker-card {
+    width: 24px;
+    height: 34px;
+  }
+
+  .app-content .pot-area {
+    margin: 0;
+  }
+
+  .app-content .pot-area [data-pot] {
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .app-content .pot-area [data-pot] > div {
+    flex-direction: row;
+    gap: 3px;
+  }
+
+  .app-content .pot-area [data-pot] span:first-child {
+    font-size: 9px;
+  }
+
+  .app-content .pot-area [data-pot] svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .app-content .pot-area [data-pot] span:last-child {
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .app-content .pot-area > div:not(:first-child) {
+    margin-top: 2px;
+    padding: 1px 6px;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .app-content .pot-area > div:not(:first-child) svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .app-content .player-seat {
+    max-width: 460px;
+    padding: 3px 6px;
+    border-radius: 10px;
+  }
+
+  .app-content .player-seat > :first-child {
+    margin-bottom: 2px;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .app-content .player-seat > :first-child span {
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .app-content .player-cards {
+    gap: 4px;
+    padding: 0;
+  }
+
+  .app-content .player-cards .poker-card {
+    width: clamp(30px, 10dvh, 40px);
+    height: clamp(40px, 12dvh, 52px);
+    padding: 3px;
+  }
+
+  .app-content .player-cards button {
+    margin-top: 1px;
+    padding: 0 2px;
+    border-width: 0;
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .app-content .hand-evaluation {
+    margin-top: 1px;
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .app-content .table-footer {
+    flex: none;
+    max-width: 900px;
+    max-height: 36dvh;
+    margin-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .app-content .table-footer > div:not(.action-controls) {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .app-content .table-footer > div:not(.action-controls) button {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .app-content .action-controls {
+    max-width: none;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+
+  .app-content .action-controls.has-amount-picker {
+    display: grid;
+    grid-template-columns: minmax(0, 43%) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .app-content .betting-controls {
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .app-content .betting-controls > :first-child {
+    font-size: 10px;
+  }
+
+  .app-content .betting-controls > input {
+    height: 12px;
+  }
+
+  .app-content .preset-buttons {
+    gap: 2px;
+    padding-top: 0;
+    font-size: 9px;
+  }
+
+  .app-content .preset-buttons button {
+    padding: 2px 0;
+  }
+
+  .app-content .action-buttons {
+    gap: 3px;
+  }
+
+  .app-content .action-buttons button {
+    min-height: 44px;
+    padding: 2px 1px;
+    border-radius: 7px;
+    font-size: 10px;
+    line-height: 1.1;
+  }
+
+  .app-content .action-buttons svg {
+    width: 13px;
+    height: 13px;
+    margin-bottom: 0;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 300px) and (hover: none) and (pointer: coarse) {
+  .app-content .table-page {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .app-content .table-main,
+  .app-content .felt-table {
+    flex: none;
+    min-height: 210px;
+  }
+
+  .app-content .table-footer {
+    position: sticky;
+    bottom: env(safe-area-inset-bottom);
+    max-height: none;
+  }
+}

@@ -18,6 +18,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   const isRaising = options.canRaise;
   const minAmount = isBetting ? options.minBet : options.minRaise;
   const maxAmount = isBetting ? options.maxBet : options.maxRaise;
+  const hasAmountPicker = (isBetting || isRaising) && minAmount < maxAmount;
 
   const [amount, setAmount] = useState<number>(minAmount || 10);
 
@@ -38,10 +39,10 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-slate-900/95 border border-amber-500/30 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-2xl flex flex-col gap-3">
+    <div className={`action-controls w-full max-w-xl mx-auto bg-slate-900/95 border border-amber-500/30 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-2xl flex flex-col gap-3 ${hasAmountPicker ? 'has-amount-picker' : ''}`}>
       {/* Bet / Raise Slider if Bet or Raise is possible */}
-      {(isBetting || isRaising) && minAmount < maxAmount && (
-        <div className="flex flex-col gap-1.5">
+      {hasAmountPicker && (
+        <div className="betting-controls flex flex-col gap-1.5">
           <div className="flex justify-between items-center text-xs text-slate-300 font-medium px-1">
             <span>{isBetting ? '下注金额' : '加注至'}</span>
             <div className="flex items-center gap-1">
@@ -61,7 +62,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           />
 
           {/* Quick presets */}
-          <div className="grid grid-cols-4 gap-1.5 pt-1 text-xs">
+          <div className="preset-buttons grid grid-cols-4 gap-1.5 pt-1 text-xs">
             <button
               onClick={() => setAmount(minAmount)}
               className="py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-semibold transition"
@@ -91,7 +92,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
       )}
 
       {/* Main Action Buttons */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="action-buttons grid grid-cols-4 gap-2">
         {/* FOLD */}
         <button
           onClick={() => handleAction({ type: 'FOLD' })}

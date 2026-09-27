@@ -182,9 +182,9 @@ export const Table: React.FC<TableProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-100">
+    <div className="table-page relative min-h-screen bg-slate-950 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-100">
       {/* Top Header */}
-      <header className="flex items-center justify-between max-w-6xl w-full mx-auto px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-sm z-30">
+      <header className="table-header flex items-center justify-between max-w-6xl w-full mx-auto px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-sm z-30">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg">
             <span className="text-[11px] text-slate-400">房间</span>
@@ -240,14 +240,14 @@ export const Table: React.FC<TableProps> = ({
       </header>
 
       {/* Main Poker Table Area */}
-      <main className="relative flex-1 flex flex-col justify-center items-center my-2 max-w-5xl w-full mx-auto">
+      <main className="table-main relative flex-1 flex flex-col justify-center items-center my-2 max-w-5xl w-full mx-auto">
         {/* Felt Table Board */}
-        <div className="relative w-full min-h-[62vh] sm:min-h-[68vh] rounded-[40px] sm:rounded-[60px] bg-gradient-to-b from-emerald-950 via-felt-dark to-emerald-950 border-[10px] sm:border-[16px] border-[#382212] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-3 sm:p-6 overflow-hidden">
+        <div className="felt-table relative w-full min-h-[62vh] sm:min-h-[68vh] rounded-[40px] sm:rounded-[60px] bg-gradient-to-b from-emerald-950 via-felt-dark to-emerald-950 border-[10px] sm:border-[16px] border-[#382212] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-3 sm:p-6 overflow-hidden">
           {/* Inner Table Felt Border Line */}
           <div className="absolute inset-2 sm:inset-3 rounded-[30px] sm:rounded-[48px] border-2 border-emerald-600/20 pointer-events-none" />
 
           {/* Opponents Section (Arc layout at top) */}
-          <div className={`relative z-10 w-full items-start gap-2 ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
+          <div data-opponent-count={opponents.length} className={`opponents-row relative z-10 w-full items-start gap-2 ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
             {opponents.map((player) => {
               const isTurn = roomView.activePlayerId === player.id && roomView.status === 'PLAYING';
               const isInitiative = roomView.initiativePlayerId === player.id && roomView.status === 'PLAYING';
@@ -257,7 +257,7 @@ export const Table: React.FC<TableProps> = ({
                 <div
                   key={player.id}
                   data-seat-id={player.id}
-                  className={`flex min-w-0 flex-col items-center ${isCrowdedTable ? 'p-0.5 sm:p-2' : 'p-2'} rounded-2xl transition duration-300 ${
+                  className={`opponent-seat flex min-w-0 flex-col items-center ${isCrowdedTable ? 'p-0.5 sm:p-2' : 'p-2'} rounded-2xl transition duration-300 ${
                     isTurn ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-lg shadow-amber-500/20 scale-105' : 'bg-slate-900/60'
                   } ${player.isFolded ? 'opacity-40 grayscale' : ''}`}
                 >
@@ -293,7 +293,7 @@ export const Table: React.FC<TableProps> = ({
                   </div>
 
                   {/* Cards Display */}
-                  <div className={`flex items-center ${isCrowdedTable ? 'gap-0.5 sm:gap-1' : 'gap-1'} folded-cards ${player.isFolded ? 'is-folded' : ''}`} aria-hidden={player.isFolded}>
+                  <div className={`opponent-cards flex items-center ${isCrowdedTable ? 'gap-0.5 sm:gap-1' : 'gap-1'} folded-cards ${player.isFolded ? 'is-folded' : ''}`} aria-hidden={player.isFolded}>
                     {player.holeCard && (
                       <DealtCard
                         card={player.holeCard}
@@ -319,7 +319,7 @@ export const Table: React.FC<TableProps> = ({
                   </div>
 
                   {rankName && (
-                    <div className="mt-1 rounded-full border border-amber-500/40 bg-slate-950/90 px-2 py-0.5 text-[11px] font-bold text-amber-200">
+                    <div className="opponent-rank mt-1 rounded-full border border-amber-500/40 bg-slate-950/90 px-2 py-0.5 text-[11px] font-bold text-amber-200">
                       {rankName}
                     </div>
                   )}
@@ -357,7 +357,7 @@ export const Table: React.FC<TableProps> = ({
           </div>
 
           {/* Center Table: Pot & Status Announcement */}
-          <div className="relative z-10 flex flex-col items-center justify-center my-auto">
+          <div className="pot-area relative z-10 flex flex-col items-center justify-center my-auto">
             <div className="relative">
               <div ref={deckRef} aria-hidden="true" className="absolute right-full mr-3 top-1/2 -translate-y-1/2 w-9 h-12 rounded-md border border-indigo-300/50 bg-indigo-950 shadow-lg grid place-items-center text-indigo-300 text-xl">
                 ♠
@@ -401,10 +401,10 @@ export const Table: React.FC<TableProps> = ({
 
           {/* My Player Cockpit at Bottom of Table */}
           {me && (
-            <div className="relative z-10 w-full flex flex-col items-center">
+            <div className="player-cockpit relative z-10 w-full flex flex-col items-center">
               <div
                 data-seat-id={me.id}
-                className={`w-full max-w-lg p-2.5 sm:p-3 rounded-2xl flex flex-col items-center transition ${
+                className={`player-seat w-full max-w-lg p-2.5 sm:p-3 rounded-2xl flex flex-col items-center transition ${
                   isMyTurn
                     ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-xl shadow-amber-500/20'
                     : 'bg-slate-900/80 backdrop-blur-sm'
@@ -436,7 +436,7 @@ export const Table: React.FC<TableProps> = ({
                 </div>
 
                 {/* My Hand Cards */}
-                <div className={`flex items-center gap-2 sm:gap-3 py-1 folded-cards ${me.isFolded ? 'is-folded' : ''}`} aria-hidden={me.isFolded}>
+                <div className={`player-cards flex items-center gap-2 sm:gap-3 py-1 folded-cards ${me.isFolded ? 'is-folded' : ''}`} aria-hidden={me.isFolded}>
                   {/* Hole Card (peekable!) */}
                   {me.holeCard && (
                     <DealtCard
@@ -466,7 +466,7 @@ export const Table: React.FC<TableProps> = ({
 
                 {/* Hand Evaluation Display */}
                 {!me.isFolded && getMyHandEvaluationText() && (
-                  <div className="mt-1 text-xs text-amber-300 font-semibold tracking-wide">
+                  <div className="hand-evaluation mt-1 text-xs text-amber-300 font-semibold tracking-wide">
                     {getMyHandEvaluationText()}
                   </div>
                 )}
@@ -477,7 +477,7 @@ export const Table: React.FC<TableProps> = ({
       </main>
 
       {/* Bottom Action Area / Controls */}
-      <footer className="relative z-30 max-w-xl w-full mx-auto mt-2">
+      <footer className="table-footer relative z-30 max-w-xl w-full mx-auto mt-2">
         {/* If Active Playing Turn for ME */}
         {isMyTurn && roomView.actionOptions && (
           <ActionControls
