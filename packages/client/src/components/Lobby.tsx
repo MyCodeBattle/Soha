@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Volume2, VolumeX, BookOpen, Users, Play, PlusCircle } from 'lucide-react';
 import { sound } from '../utils/audio.js';
 import { RulesModal } from './RulesModal.js';
+import { FullscreenButton } from './FullscreenButton.js';
 
 interface LobbyProps {
   playerName: string;
@@ -47,9 +48,11 @@ export const Lobby: React.FC<LobbyProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <FullscreenButton />
           <button
             onClick={() => setIsRulesOpen(true)}
             className="flex items-center gap-1 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700 text-xs rounded-lg text-slate-300 transition"
+            aria-label="玩法规则"
           >
             <BookOpen className="w-3.5 h-3.5 text-amber-400" />
             <span>玩法规则</span>

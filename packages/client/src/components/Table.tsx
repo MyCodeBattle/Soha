@@ -4,6 +4,7 @@ import { PlayerAction, evaluateShowdownHand, evaluateVisibleHand } from '@soha/c
 import { ChipFlight, DealtCard } from './TableMotion.js';
 import { ActionControls } from './ActionControls.js';
 import { RulesModal } from './RulesModal.js';
+import { FullscreenButton } from './FullscreenButton.js';
 import { sound } from '../utils/audio.js';
 import {
   Volume2,
@@ -20,7 +21,17 @@ import {
   Clock,
   Sparkles,
   Trophy,
+  MoreHorizontal,
 } from 'lucide-react';
+
+const opponentSeatSlots = [
+  [],
+  ['top-center'],
+  ['top-left', 'top-right'],
+  ['top-left', 'top-center', 'top-right'],
+  ['top-left', 'top-right', 'side-left', 'side-right'],
+  ['top-left', 'top-center', 'top-right', 'side-left', 'side-right'],
+];
 
 interface TableProps {
   roomView: RoomView;
@@ -47,6 +58,7 @@ export const Table: React.FC<TableProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const deckRef = useRef<HTMLDivElement>(null);
@@ -60,6 +72,10 @@ export const Table: React.FC<TableProps> = ({
   useEffect(() => {
     mountedRef.current = true;
   }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [roomView.status]);
 
   const me = roomView.players.find((p) => p.id === myPlayerId);
   const isHost = roomView.hostId === myPlayerId;
@@ -182,11 +198,14 @@ export const Table: React.FC<TableProps> = ({
   };
 
   return (
-    <div className="table-page relative min-h-screen bg-slate-950 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-100">
+    <div
+      className="table-page relative min-h-screen bg-slate-950 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-100"
+      data-has-footer={isMyTurn || roomView.status === 'WAITING' || roomView.status === 'SUMMARY'}
+    >
       {/* Top Header */}
       <header className="table-header flex items-center justify-between max-w-6xl w-full mx-auto px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-sm z-30">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg">
+          <div className="room-code flex items-center gap-1.5 bg-slate-800 px-2.5 py-1 rounded-lg">
             <span className="text-[11px] text-slate-400">房间</span>
             <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm tracking-wider">
               {roomView.roomId}
@@ -215,27 +234,43 @@ export const Table: React.FC<TableProps> = ({
         </div>
 
         {/* Right Tools */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="table-header-tools flex items-center gap-1 sm:gap-2">
+          <FullscreenButton />
           <button
-            onClick={() => setIsRulesOpen(true)}
-            className="p-1.5 sm:px-2 sm:py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1 transition"
+            type="button"
+            className="table-menu-toggle rounded-lg bg-slate-800 p-1.5 text-slate-200"
+            aria-label={isMenuOpen ? '关闭牌桌菜单' : '打开牌桌菜单'}
+            aria-expanded={isMenuOpen}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">规则</span>
+            <MoreHorizontal className="h-4 w-4" />
           </button>
-          <button
-            onClick={handleToggleSound}
-            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
-          >
-            {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
-          </button>
-          <button
-            onClick={onLeaveRoom}
-            className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 rounded-lg transition"
-            title="退出房间"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
+          <div className={`table-utilities flex items-center gap-1 sm:gap-2 ${isMenuOpen ? 'is-open' : ''}`}>
+            <button
+              onClick={() => { setIsRulesOpen(true); setIsMenuOpen(false); }}
+              className="p-1.5 sm:px-2 sm:py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs flex items-center gap-1 transition"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+              <span className="table-utility-label hidden sm:inline">规则</span>
+            </button>
+            <button
+              onClick={() => { handleToggleSound(); setIsMenuOpen(false); }}
+              className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
+              aria-label="切换音效"
+            >
+              {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-slate-500" />}
+              <span className="table-utility-label hidden">音效</span>
+            </button>
+            <button
+              onClick={() => { setIsMenuOpen(false); onLeaveRoom(); }}
+              className="p-1.5 bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 rounded-lg transition"
+              title="退出房间"
+              aria-label="退出房间"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="table-utility-label hidden">退出房间</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -248,7 +283,7 @@ export const Table: React.FC<TableProps> = ({
 
           {/* Opponents Section (Arc layout at top) */}
           <div data-opponent-count={opponents.length} className={`opponents-row relative z-10 w-full items-start gap-2 ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
-            {opponents.map((player) => {
+            {opponents.map((player, index) => {
               const isTurn = roomView.activePlayerId === player.id && roomView.status === 'PLAYING';
               const isInitiative = roomView.initiativePlayerId === player.id && roomView.status === 'PLAYING';
               const rankName = revealedHandRank(player);
@@ -257,6 +292,7 @@ export const Table: React.FC<TableProps> = ({
                 <div
                   key={player.id}
                   data-seat-id={player.id}
+                  data-seat-position={opponentSeatSlots[opponents.length]?.[index]}
                   className={`opponent-seat flex min-w-0 flex-col items-center ${isCrowdedTable ? 'p-0.5 sm:p-2' : 'p-2'} rounded-2xl transition duration-300 ${
                     isTurn ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-lg shadow-amber-500/20 scale-105' : 'bg-slate-900/60'
                   } ${player.isFolded ? 'opacity-40 grayscale' : ''}`}
@@ -546,14 +582,14 @@ export const Table: React.FC<TableProps> = ({
 
         {/* If In SUMMARY State */}
         {roomView.status === 'SUMMARY' && (
-          <div className="bg-slate-900/95 border border-amber-500/40 rounded-2xl p-4 shadow-2xl flex flex-col items-center gap-3 backdrop-blur-md summary-enter">
+          <div className="summary-panel bg-slate-900/95 border border-amber-500/40 rounded-2xl p-4 shadow-2xl flex flex-col items-center gap-3 backdrop-blur-md summary-enter">
             <div className="flex items-center gap-2 text-amber-400 font-extrabold text-base">
               <Trophy className="w-5 h-5 text-amber-400 fill-amber-400" />
               <span>本局结算</span>
             </div>
 
             {/* Winners List */}
-            <div className="w-full flex flex-col gap-1.5 text-xs text-center">
+            <div className="summary-winners w-full flex flex-col gap-1.5 text-xs text-center">
               {roomView.winners?.map((w, idx) => {
                 const winnerPlayer = roomView.players.find((p) => p.id === w.playerId);
                 return (

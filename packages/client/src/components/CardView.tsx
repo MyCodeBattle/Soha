@@ -106,6 +106,7 @@ export const CardView: React.FC<CardViewProps> = ({
       onTouchEnd={() => canPeek && setIsPeeking(false)}
     >
       <div
+        data-card-face
         className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold`}
       >
         {/* Top-left rank and suit */}

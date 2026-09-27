@@ -135,37 +135,26 @@ export const App: React.FC = () => {
     socket.emit('start_game');
   };
 
-  return (
-    <>
-      <div className="app-content">
-        {roomView ? (
-          <Table
-            roomView={roomView}
-            myPlayerId={playerId}
-            onAction={handleAction}
-            onToggleReady={handleToggleReady}
-            onAddBot={handleAddBot}
-            onRemoveBot={handleRemoveBot}
-            onResetChips={handleResetChips}
-            onStartGame={handleStartGame}
-            onLeaveRoom={handleLeaveRoom}
-          />
-        ) : (
-          <Lobby
-            playerName={playerName}
-            onNameChange={handleNameChange}
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
-            isConnecting={isConnecting}
-            error={errorMessage}
-          />
-        )}
-      </div>
-      <div className="rotate-notice" role="status" aria-live="polite">
-        <span className="rotate-notice-icon" aria-hidden="true">↻</span>
-        <h1>请将手机横过来</h1>
-        <p>横屏后即可进入港式五张梭哈</p>
-      </div>
-    </>
+  return roomView ? (
+    <Table
+      roomView={roomView}
+      myPlayerId={playerId}
+      onAction={handleAction}
+      onToggleReady={handleToggleReady}
+      onAddBot={handleAddBot}
+      onRemoveBot={handleRemoveBot}
+      onResetChips={handleResetChips}
+      onStartGame={handleStartGame}
+      onLeaveRoom={handleLeaveRoom}
+    />
+  ) : (
+    <Lobby
+      playerName={playerName}
+      onNameChange={handleNameChange}
+      onCreateRoom={handleCreateRoom}
+      onJoinRoom={handleJoinRoom}
+      isConnecting={isConnecting}
+      error={errorMessage}
+    />
   );
 };

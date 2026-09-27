@@ -48,182 +48,395 @@ body {
   .folded-cards.is-folded { transform: none; }
 }
 
-.rotate-notice {
+
+.fullscreen-control {
+  position: relative;
+  flex: none;
+}
+
+.fullscreen-hint {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: max-content;
+  max-width: min(220px, 80vw);
+  padding: 8px 10px;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 12px;
+  box-shadow: 0 8px 24px #0008;
+}
+
+.table-menu-toggle {
   display: none;
 }
 
-@media (orientation: portrait) and (max-width: 600px) and (hover: none) and (pointer: coarse) {
-  .app-content {
-    display: none;
+@media (pointer: coarse) and (max-width: 1000px) {
+  .table-header {
+    gap: 4px;
+    z-index: 50;
   }
 
-  .rotate-notice {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
-    background: radial-gradient(circle at 50% 35%, #123e2b, #030712 70%);
-    color: #f8fafc;
-    text-align: center;
-  }
-
-  .rotate-notice-icon {
-    display: grid;
-    place-items: center;
-    width: 72px;
-    height: 72px;
-    border: 2px solid #fbbf24;
-    border-radius: 18px;
-    color: #fbbf24;
-    font-size: 48px;
-    line-height: 1;
-    transform: rotate(90deg);
-  }
-
-  .rotate-notice h1 {
-    font-size: 22px;
-    font-weight: 800;
-  }
-
-  .rotate-notice p {
-    color: #cbd5e1;
-    font-size: 14px;
-  }
-}
-
-/* Width breakpoints alone enlarge cards on a phone held sideways. */
-@media (orientation: landscape) and (max-height: 600px) and (hover: none) and (pointer: coarse) {
-  .app-content .lobby-page,
-  .app-content .table-page {
-    height: 100dvh;
-    min-height: 0;
-    padding: calc(4px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
-  }
-
-  .app-content .lobby-page {
-    overflow-y: auto;
+  .table-header > div:first-child,
+  .table-header-tools {
+    min-width: 0;
     gap: 4px;
   }
 
-  .app-content .lobby-page > header,
-  .app-content .lobby-page > footer {
-    flex: none;
+  .table-header .room-code {
+    gap: 2px;
+    padding: 3px 5px;
   }
 
-  .app-content .lobby-page > footer {
-    padding: 2px 0;
+  .table-header .room-code > span:first-child {
+    display: none;
+  }
+
+  .table-header .room-code > span:nth-child(2) {
     font-size: 10px;
   }
 
-  .app-content .lobby-main {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr);
+  .table-header .room-code button {
+    padding: 2px;
+  }
+
+  .table-header > div:nth-child(2) {
+    gap: 3px;
+    padding: 3px 6px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .table-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .table-utilities {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 60;
+    display: none;
+    min-width: 132px;
+    flex-direction: column;
     align-items: stretch;
+    padding: 6px;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    background: #0f172a;
+    box-shadow: 0 10px 26px #0009;
+  }
+
+  .table-utilities.is-open {
+    display: flex;
+  }
+
+  .table-utilities button {
+    justify-content: flex-start;
+    gap: 6px;
+    min-height: 34px;
+  }
+
+  .table-utilities .table-utility-label {
+    display: inline;
+    font-size: 11px;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 600px) and (pointer: coarse) {
+  .lobby-page,
+  .table-page {
+    padding-top: calc(8px + env(safe-area-inset-top));
+    padding-right: calc(8px + env(safe-area-inset-right));
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    padding-left: calc(8px + env(safe-area-inset-left));
+  }
+
+  .lobby-page > header {
+    gap: 6px;
+  }
+
+  .lobby-page > header > div:last-child {
+    gap: 4px;
+  }
+
+  .lobby-page > header > div:last-child > button:first-of-type {
+    padding: 8px;
+  }
+
+  .lobby-page > header > div:last-child > button:first-of-type span {
+    display: none;
+  }
+
+  .table-page {
+    min-height: 100dvh;
     gap: 8px;
+  }
+
+  .table-page[data-has-footer="true"] {
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
+  }
+
+  .table-header {
+    position: sticky;
+    top: env(safe-area-inset-top);
+    padding: 4px;
+  }
+
+  .table-main {
+    flex: none;
+    margin: 0;
+  }
+
+  .felt-table {
+    min-height: 0;
+    padding: 12px 7px;
+    border-width: 6px;
+    border-radius: 36px;
+    gap: 12px;
+  }
+
+  .felt-table > :first-child {
+    inset: 5px;
+    border-radius: 29px;
+  }
+
+  .opponents-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .opponent-seat {
     width: 100%;
-    max-width: 900px;
-    margin: auto;
-    padding: 4px 0;
+    max-width: none;
+    padding: 4px;
   }
 
-  .app-content .nickname-panel,
-  .app-content .lobby-actions > div {
-    padding: 10px;
+  .opponent-seat > :first-child,
+  .opponent-seat > :nth-child(2) {
+    gap: 3px;
+    margin-bottom: 2px;
+    white-space: nowrap;
   }
 
-  .app-content .lobby-error {
-    grid-column: 1 / -1;
+  .opponent-seat > :first-child span {
+    max-width: 55px;
   }
 
-  .app-content .lobby-actions {
+  .opponent-cards {
+    justify-content: center;
+    gap: 0;
+  }
+
+  .opponent-cards > :not(:first-child) {
+    margin-left: -4px;
+  }
+
+  .opponent-cards .poker-card {
+    width: clamp(22px, 6.1vw, 29px);
+    height: 36px;
+    padding: 2px;
+    font-size: 10px;
+  }
+
+  .opponent-cards [data-card-face] > :nth-child(2),
+  .opponent-cards [data-card-face] > :nth-child(3),
+  .player-cards [data-card-face] > :nth-child(2),
+  .player-cards [data-card-face] > :nth-child(3) {
+    display: none;
+  }
+
+  .opponent-cards [data-card-face] > :first-child,
+  .player-cards [data-card-face] > :first-child {
+    align-items: flex-start;
+  }
+
+  .pot-area {
+    margin: 4px auto;
+  }
+
+  .player-seat {
+    max-width: none;
+  }
+
+  .player-cards {
+    gap: 3px;
+  }
+
+  .player-cards .poker-card {
+    width: clamp(35px, 10vw, 45px);
+    height: 58px;
+  }
+
+  .table-footer {
+    position: fixed;
+    bottom: env(safe-area-inset-bottom);
+    right: calc(8px + env(safe-area-inset-right));
+    left: calc(8px + env(safe-area-inset-left));
+    z-index: 30;
+    width: auto;
+    max-height: 42dvh;
+    margin-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .action-buttons button {
+    min-height: 48px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .lobby-page {
+    min-height: 100dvh;
+    gap: 4px;
+    padding: calc(4px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left));
+  }
+
+  .lobby-page > header,
+  .lobby-page > footer {
+    flex: none;
+  }
+
+  .lobby-page > footer {
+    display: none;
+  }
+
+  .lobby-main {
+    width: min(100%, 740px);
+    max-width: none;
+    gap: 5px;
+    padding: 0;
+  }
+
+  .nickname-panel,
+  .lobby-actions > div {
+    padding: 7px 10px;
+  }
+
+  .lobby-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
 
-  .app-content .lobby-actions > div {
-    gap: 8px;
+  .lobby-actions > div {
+    gap: 6px;
   }
 
-  .app-content .lobby-actions p {
-    line-height: 1.25;
+  .lobby-actions p {
+    margin-bottom: 4px;
   }
 
-  .app-content .rules-overlay {
-    padding: calc(6px + env(safe-area-inset-top)) calc(6px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(6px + env(safe-area-inset-left));
+  .rules-overlay {
+    padding: calc(4px + env(safe-area-inset-top)) calc(4px + env(safe-area-inset-right)) calc(4px + env(safe-area-inset-bottom)) calc(4px + env(safe-area-inset-left));
   }
 
-  .app-content .rules-panel {
-    max-width: 720px;
+  .rules-panel {
     max-height: 100%;
   }
 
-  .app-content .rules-panel > :first-child,
-  .app-content .rules-panel > :last-child {
-    flex: none;
-    padding: 8px 12px;
+  .rules-panel > :first-child,
+  .rules-panel > :last-child {
+    padding: 5px 10px;
   }
 
-  .app-content .rules-panel > :nth-child(2) {
+  .rules-panel > :nth-child(2) {
     min-height: 0;
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
-  .app-content .table-page {
+  .table-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100dvh;
+    min-height: 0;
+    gap: 2px;
     overflow: hidden;
-    gap: 3px;
+    padding: calc(3px + env(safe-area-inset-top)) calc(4px + env(safe-area-inset-right)) calc(3px + env(safe-area-inset-bottom)) calc(4px + env(safe-area-inset-left));
   }
 
-  .app-content .table-header {
-    flex: none;
-    min-height: 30px;
-    padding: 2px 6px;
+  .table-header {
+    position: absolute;
+    top: calc(5px + env(safe-area-inset-top));
+    right: calc(9px + env(safe-area-inset-right));
+    left: calc(9px + env(safe-area-inset-left));
+    width: auto;
+    max-width: none;
+    min-height: 28px;
+    padding: 1px 4px;
+    border-radius: 8px;
   }
 
-  .app-content .table-header > div {
-    gap: 4px;
+  .table-header .room-code {
+    padding: 1px 4px;
   }
 
-  .app-content .table-main {
-    flex: 1 1 auto;
+  .table-header .fullscreen-button,
+  .table-menu-toggle {
+    min-height: 26px;
+    padding: 2px 5px;
+    font-size: 10px;
+  }
+
+  .table-main {
+    grid-row: 1;
+    width: 100%;
+    max-width: none;
     min-height: 0;
     margin: 0;
   }
 
-  .app-content .felt-table {
+  .felt-table {
+    width: 100%;
     height: 100%;
     min-height: 0;
-    border-width: 6px;
-    border-radius: 32px;
-    padding: 4px 8px;
+    padding: 0;
+    border-width: 5px;
+    border-radius: 999px;
+    overflow: hidden;
   }
 
-  .app-content .felt-table > :first-child {
-    inset: 4px;
-    border-radius: 26px;
+  .felt-table > :first-child {
+    inset: 5px;
+    border-radius: 999px;
   }
 
-  .app-content .opponents-row {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-around;
-    gap: 2px;
+  .opponents-row {
+    position: absolute;
+    inset: 0;
+    display: block;
+    pointer-events: none;
   }
 
-  .app-content .opponent-seat {
-    position: relative;
-    flex: 1 1 0;
+  .opponent-seat {
+    position: absolute;
+    width: 27%;
+    max-width: 145px;
     min-width: 0;
     padding: 2px;
-    border-radius: 10px;
+    border-radius: 8px;
+    gap: 0;
+    transform: translateX(-50%);
+    pointer-events: auto;
   }
 
-  .app-content .opponent-seat > :first-child,
-  .app-content .opponent-seat > :nth-child(2) {
+  .opponent-seat[data-seat-position="top-left"] { top: 34px; left: 22%; }
+  .opponent-seat[data-seat-position="top-center"] { top: 34px; left: 50%; }
+  .opponent-seat[data-seat-position="top-right"] { top: 34px; left: 78%; }
+  .opponent-seat[data-seat-position="side-left"] { top: 52%; left: 14%; transform: translate(-50%, -50%); }
+  .opponent-seat[data-seat-position="side-right"] { top: 52%; left: 86%; transform: translate(-50%, -50%); }
+
+  .opponent-seat > :first-child,
+  .opponent-seat > :nth-child(2) {
+    width: 100%;
+    justify-content: center;
     gap: 2px;
     margin-bottom: 1px;
     font-size: 9px;
@@ -231,148 +444,166 @@ body {
     white-space: nowrap;
   }
 
-  .app-content .opponent-seat svg {
+  .opponent-seat > :first-child span {
+    max-width: 50px;
+  }
+
+  .opponent-seat > :nth-child(2) span {
+    font-size: 9px;
+  }
+
+  .opponent-seat svg {
     width: 10px;
     height: 10px;
   }
 
-  .app-content .opponent-seat > :nth-child(2) span {
-    font-size: 9px;
+  .opponent-seat > :last-child {
+    margin-top: 1px;
     line-height: 1;
   }
 
-  .app-content .opponents-row[data-opponent-count="4"] .opponent-seat > :nth-child(2),
-  .app-content .opponents-row[data-opponent-count="5"] .opponent-seat > :nth-child(2) {
-    align-self: flex-start;
-    padding-left: 3px;
-  }
-
-  .app-content .opponent-seat > :first-child span {
-    max-width: 48px;
-  }
-
-  .app-content .opponent-seat > :last-child {
-    position: absolute;
-    top: 13px;
-    right: 2px;
-    margin-top: 0;
-    line-height: 1;
-  }
-
-  .app-content .opponent-seat > :last-child:empty {
+  .opponent-seat > :last-child:empty {
     display: none;
   }
 
-  .app-content .opponent-rank {
+  .opponent-seat .opponent-rank {
     position: absolute;
-    top: 1px;
-    right: 2px;
-    max-width: 48px;
-    margin-top: 0;
+    top: -6px;
+    right: 0;
+    max-width: 70px;
     overflow: hidden;
-    padding: 0 2px;
+    padding: 0 3px;
     font-size: 8px;
     line-height: 1.1;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .app-content .opponent-cards {
+  .opponent-cards {
+    width: 100%;
+    justify-content: center;
     gap: 0;
   }
 
-  .app-content .opponent-cards > :not(:first-child) {
-    margin-left: -5px;
+  .opponent-cards > :not(:first-child) {
+    margin-left: -4px;
   }
 
-  .app-content .opponent-cards .poker-card {
-    width: 20px;
-    height: 30px;
-    padding: 2px;
-    font-size: 9px;
+  .opponent-cards .poker-card {
+    width: clamp(19px, 3.8vw, 23px);
+    height: clamp(29px, 9.5dvh, 34px);
+    padding: 1px;
+    border-width: 1px;
+    font-size: 10px;
   }
 
-  .app-content .opponents-row[data-opponent-count="1"] .poker-card,
-  .app-content .opponents-row[data-opponent-count="2"] .poker-card {
-    width: clamp(22px, 7dvh, 28px);
-    height: clamp(30px, 9dvh, 40px);
+  .opponent-cards [data-card-face] > :nth-child(2),
+  .opponent-cards [data-card-face] > :nth-child(3) {
+    display: none;
   }
 
-  .app-content .opponents-row[data-opponent-count="3"] .poker-card {
-    width: 24px;
-    height: 34px;
+  .opponent-cards [data-card-face] > :first-child {
+    align-items: flex-start;
   }
 
-  .app-content .pot-area {
+  .pot-area {
+    position: absolute;
+    top: 52%;
+    left: 50%;
+    width: 34%;
     margin: 0;
+    transform: translate(-50%, -50%);
   }
 
-  .app-content .pot-area [data-pot] {
+  .pot-area [data-pot] {
     gap: 4px;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: 10px;
   }
 
-  .app-content .pot-area [data-pot] > div {
+  .pot-area [data-pot] > div {
     flex-direction: row;
     gap: 3px;
   }
 
-  .app-content .pot-area [data-pot] span:first-child {
+  .pot-area [data-pot] span:first-child {
     font-size: 9px;
   }
 
-  .app-content .pot-area [data-pot] svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .app-content .pot-area [data-pot] span:last-child {
+  .pot-area [data-pot] span:last-child {
     font-size: 14px;
     line-height: 1;
   }
 
-  .app-content .pot-area > div:not(:first-child) {
-    margin-top: 2px;
-    padding: 1px 6px;
-    font-size: 9px;
-    line-height: 1;
+  .pot-area [data-pot] svg {
+    width: 13px;
+    height: 13px;
   }
 
-  .app-content .pot-area > div:not(:first-child) svg {
+  .pot-area > div:not(:first-child) {
+    max-width: 100%;
+    margin-top: 2px;
+    padding: 1px 4px;
+    font-size: 9px;
+    line-height: 1;
+    text-align: center;
+  }
+
+  .pot-area > div:not(:first-child) svg {
     width: 10px;
     height: 10px;
   }
 
-  .app-content .player-seat {
-    max-width: 460px;
-    padding: 3px 6px;
-    border-radius: 10px;
+  .player-cockpit {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    width: 58%;
+    max-width: 340px;
+    transform: translateX(-50%);
   }
 
-  .app-content .player-seat > :first-child {
-    margin-bottom: 2px;
-    font-size: 10px;
+  .player-seat {
+    width: 100%;
+    max-width: none;
+    padding: 2px 5px;
+    border-radius: 9px;
+  }
+
+  .player-seat > :first-child {
+    margin-bottom: 1px;
+    font-size: 9px;
     line-height: 1;
   }
 
-  .app-content .player-seat > :first-child span {
-    font-size: 10px;
+  .player-seat > :first-child span {
+    font-size: 9px;
     line-height: 1;
   }
 
-  .app-content .player-cards {
-    gap: 4px;
+  .player-cards {
+    gap: 3px;
     padding: 0;
   }
 
-  .app-content .player-cards .poker-card {
-    width: clamp(30px, 10dvh, 40px);
-    height: clamp(40px, 12dvh, 52px);
-    padding: 3px;
+  .player-cards .poker-card {
+    width: clamp(25px, 5vw, 30px);
+    height: clamp(36px, 11dvh, 42px);
+    padding: 2px;
+    border-width: 1px;
+    font-size: 11px;
   }
 
-  .app-content .player-cards button {
+  .player-cards [data-card-face] > :nth-child(2),
+  .player-cards [data-card-face] > :nth-child(3) {
+    display: none;
+  }
+
+  .player-cards [data-card-face] > :first-child {
+    align-items: flex-start;
+  }
+
+  .player-cards button {
     margin-top: 1px;
     padding: 0 2px;
     border-width: 0;
@@ -380,72 +611,124 @@ body {
     line-height: 1;
   }
 
-  .app-content .hand-evaluation {
+  .hand-evaluation {
     margin-top: 1px;
-    font-size: 10px;
+    font-size: 9px;
     line-height: 1;
   }
 
-  .app-content .table-footer {
-    flex: none;
-    max-width: 900px;
-    max-height: 36dvh;
-    margin-top: 0;
+  .table-footer {
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+    max-height: min(30dvh, 100px);
+    margin: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
 
-  .app-content .table-footer > div:not(.action-controls) {
+  .table-footer > div:not(.action-controls) {
     gap: 4px;
-    padding: 6px;
+    padding: 5px;
   }
 
-  .app-content .table-footer > div:not(.action-controls) button {
+  .table-footer > div:not(.action-controls) button {
     padding-top: 4px;
     padding-bottom: 4px;
   }
 
-  .app-content .action-controls {
-    max-width: none;
-    gap: 6px;
-    padding: 6px;
-    border-radius: 10px;
+  .summary-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 6px;
   }
 
-  .app-content .action-controls.has-amount-picker {
+  .summary-panel > :first-child {
+    gap: 3px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .summary-panel > :first-child svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .summary-winners {
+    display: flex;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px;
+    font-size: 9px;
+  }
+
+  .summary-winners > div {
+    flex: 1 1 125px;
+    min-width: 0;
+    gap: 3px;
+    padding: 2px 4px;
+    border-radius: 6px;
+  }
+
+  .summary-winners > div span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .summary-panel > button {
+    width: auto;
+    min-width: 96px;
+    min-height: 44px;
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+
+  .action-controls {
     display: grid;
+    width: 100%;
+    max-width: none;
+    gap: 3px;
+    padding: 4px;
+    border-radius: 9px;
+  }
+
+  .action-controls.has-amount-picker {
     grid-template-columns: minmax(0, 43%) minmax(0, 1fr);
     align-items: center;
   }
 
-  .app-content .betting-controls {
+  .betting-controls {
     min-width: 0;
     gap: 2px;
   }
 
-  .app-content .betting-controls > :first-child {
-    font-size: 10px;
+  .betting-controls > :first-child {
+    font-size: 9px;
   }
 
-  .app-content .betting-controls > input {
+  .betting-controls > input {
     height: 12px;
   }
 
-  .app-content .preset-buttons {
+  .preset-buttons {
     gap: 2px;
     padding-top: 0;
     font-size: 9px;
   }
 
-  .app-content .preset-buttons button {
+  .preset-buttons button {
     padding: 2px 0;
   }
 
-  .app-content .action-buttons {
+  .action-buttons {
     gap: 3px;
   }
 
-  .app-content .action-buttons button {
+  .action-buttons button {
     min-height: 44px;
     padding: 2px 1px;
     border-radius: 7px;
@@ -453,29 +736,47 @@ body {
     line-height: 1.1;
   }
 
-  .app-content .action-buttons svg {
+  .action-buttons svg {
     width: 13px;
     height: 13px;
     margin-bottom: 0;
   }
 }
 
-@media (orientation: landscape) and (max-height: 300px) and (hover: none) and (pointer: coarse) {
-  .app-content .table-page {
-    height: 100dvh;
+@media (orientation: landscape) and (max-height: 300px) and (pointer: coarse) {
+  .table-page {
+    display: flex;
+    height: auto;
     min-height: 100dvh;
     overflow-y: auto;
   }
 
-  .app-content .table-main,
-  .app-content .felt-table {
+  .table-page[data-has-footer="true"] {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+
+  .table-header {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: 100%;
     flex: none;
+  }
+
+  .table-main,
+  .felt-table {
+    flex: none;
+    height: 210px;
     min-height: 210px;
   }
 
-  .app-content .table-footer {
-    position: sticky;
+  .table-footer {
+    position: fixed;
     bottom: env(safe-area-inset-bottom);
-    max-height: none;
+    right: calc(4px + env(safe-area-inset-right));
+    left: calc(4px + env(safe-area-inset-left));
+    width: auto;
+    max-height: min(48dvh, 110px);
   }
 }
