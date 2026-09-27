@@ -603,6 +603,20 @@ body {
     align-items: flex-start;
   }
 
+  .hole-card-face {
+    border-color: #eab308;
+  }
+
+  .hole-card-indicator {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
   .player-cards button {
     margin-top: 1px;
     padding: 0 2px;

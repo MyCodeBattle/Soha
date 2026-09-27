@@ -107,7 +107,7 @@ export const CardView: React.FC<CardViewProps> = ({
     >
       <div
         data-card-face
-        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold`}
+        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold ${isHole ? 'hole-card-face' : ''}`}
       >
         {/* Top-left rank and suit */}
         <div className={`leading-none flex flex-col items-center ${suitColor}`}>
@@ -130,7 +130,7 @@ export const CardView: React.FC<CardViewProps> = ({
 
         {/* Hole Card Indicator */}
         {isHole && (
-          <div className="absolute top-0 right-0 bg-gold-dark text-[9px] text-slate-950 font-bold px-1 rounded-bl leading-none py-0.5">
+          <div className="hole-card-indicator absolute top-0 right-0 bg-gold-dark text-[9px] text-slate-950 font-bold px-1 rounded-bl leading-none py-0.5">
             暗
           </div>
         )}
