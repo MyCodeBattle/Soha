@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { RoomView } from '../../../server/src/room.js';
 import { PlayerAction, evaluateShowdownHand, evaluateVisibleHand } from '@soha/core';
-import { CardView } from './CardView.js';
+import { ChipFlight, DealtCard } from './TableMotion.js';
 import { ActionControls } from './ActionControls.js';
 import { RulesModal } from './RulesModal.js';
 import { sound } from '../utils/audio.js';
@@ -49,6 +49,17 @@ export const Table: React.FC<TableProps> = ({
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const deckRef = useRef<HTMLDivElement>(null);
+  const mountedRef = useRef(false);
+  const playedPresentationRef = useRef(roomView.presentation?.sequence ?? -1);
+  const playedActionRef = useRef(roomView.lastAction?.sequence ?? -1);
+  const previousStatusRef = useRef(roomView.status);
+  const [actionFlightSequence, setActionFlightSequence] = useState<number | null>(null);
+  const [awardFlightSequence, setAwardFlightSequence] = useState<number | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+  }, []);
 
   const me = roomView.players.find((p) => p.id === myPlayerId);
   const isHost = roomView.hostId === myPlayerId;
@@ -87,14 +98,42 @@ export const Table: React.FC<TableProps> = ({
     return () => clearInterval(interval);
   }, [roomView.actionDeadline, roomView.status, isMyTurn]);
 
-  // Card dealing sound on street update
+  // Sounds follow authoritative presentation steps, once per received step.
   useEffect(() => {
-    if (roomView.status === 'PLAYING') {
+    const step = roomView.presentation;
+    if (!step) return;
+    if (playedPresentationRef.current === step.sequence) return;
+    playedPresentationRef.current = step.sequence;
+    if (step.phase === 'DEAL_UP' || step.phase === 'DEAL_HOLE' || step.phase === 'FLIP_HOLE') {
       sound.playCardDeal();
-    } else if (roomView.status === 'SUMMARY') {
-      sound.playWinFanfare();
     }
-  }, [roomView.street, roomView.status]);
+    if (step.phase === 'AWARD') {
+      setAwardFlightSequence(step.sequence);
+      const timeout = setTimeout(() => setAwardFlightSequence(null), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [roomView.presentation?.sequence]);
+
+  useEffect(() => {
+    const action = roomView.lastAction;
+    if (!action) return;
+    if (playedActionRef.current === action.sequence) return;
+    playedActionRef.current = action.sequence;
+    if (action.amount > 0) {
+      sound.playChipSound();
+      setActionFlightSequence(action.sequence);
+      const timeout = setTimeout(() => setActionFlightSequence(null), 300);
+      return () => clearTimeout(timeout);
+    }
+  }, [roomView.lastAction?.sequence]);
+
+  useEffect(() => {
+    if (previousStatusRef.current !== 'SUMMARY' && roomView.status === 'SUMMARY') sound.playWinFanfare();
+    previousStatusRef.current = roomView.status;
+  }, [roomView.status]);
+
+  const shouldAnimateCard = (phase: 'DEAL_HOLE' | 'DEAL_UP' | 'FLIP_HOLE', playerId: string) =>
+    mountedRef.current && roomView.presentation?.phase === phase && roomView.presentation.playerId === playerId;
 
   // Format street name
   const getStreetLabel = () => {
@@ -205,6 +244,7 @@ export const Table: React.FC<TableProps> = ({
               return (
                 <div
                   key={player.id}
+                  data-seat-id={player.id}
                   className={`flex flex-col items-center p-2 rounded-2xl transition duration-300 ${
                     isTurn ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-lg shadow-amber-500/20 scale-105' : 'bg-slate-900/60'
                   } ${player.isFolded ? 'opacity-40 grayscale' : ''}`}
@@ -241,12 +281,28 @@ export const Table: React.FC<TableProps> = ({
                   </div>
 
                   {/* Cards Display */}
-                  <div className="flex items-center gap-1">
+                  <div className={`flex items-center gap-1 folded-cards ${player.isFolded ? 'is-folded' : ''}`} aria-hidden={player.isFolded}>
                     {player.holeCard && (
-                      <CardView card={player.holeCard} size="sm" isHole />
+                      <DealtCard
+                        card={player.holeCard}
+                        size="sm"
+                        isHole
+                        deckRef={deckRef}
+                        animateDeal={shouldAnimateCard('DEAL_HOLE', player.id)}
+                        animateFlip={shouldAnimateCard('FLIP_HOLE', player.id)}
+                        sequence={roomView.presentation?.sequence}
+                      />
                     )}
                     {player.upcards.map((card, idx) => (
-                      <CardView key={card.id || idx} card={card} size="sm" />
+                      <DealtCard
+                        key={card.id || idx}
+                        card={card}
+                        size="sm"
+                        deckRef={deckRef}
+                        animateDeal={shouldAnimateCard('DEAL_UP', player.id) && idx === player.upcards.length - 1}
+                        animateFlip={false}
+                        sequence={roomView.presentation?.sequence}
+                      />
                     ))}
                   </div>
 
@@ -258,7 +314,7 @@ export const Table: React.FC<TableProps> = ({
                       </span>
                     )}
                     {player.isAllIn && (
-                      <span className="text-[10px] bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded font-black animate-pulse">
+                        <span className="text-[10px] bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded font-black">
                         梭哈!
                       </span>
                     )}
@@ -284,21 +340,38 @@ export const Table: React.FC<TableProps> = ({
 
           {/* Center Table: Pot & Status Announcement */}
           <div className="relative z-10 flex flex-col items-center justify-center my-auto">
-            {/* Pot Box */}
-            <div className="flex items-center gap-2 bg-slate-950/80 border border-amber-500/40 px-4 py-2 rounded-2xl shadow-xl backdrop-blur-md">
-              <Coins className="w-5 h-5 text-amber-400" />
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400">底池 Pot</span>
-                <span className="text-xl sm:text-2xl font-black text-amber-300 leading-none">
-                  ${roomView.pot}
-                </span>
+            <div className="relative">
+              <div ref={deckRef} aria-hidden="true" className="absolute right-full mr-3 top-1/2 -translate-y-1/2 w-9 h-12 rounded-md border border-indigo-300/50 bg-indigo-950 shadow-lg grid place-items-center text-indigo-300 text-xl">
+                ♠
+              </div>
+              {/* Pot Box */}
+              <div data-pot className="flex items-center gap-2 bg-slate-950/80 border border-amber-500/40 px-4 py-2 rounded-2xl shadow-xl backdrop-blur-md">
+                <Coins className="w-5 h-5 text-amber-400" />
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400">底池 Pot</span>
+                  <span className="text-xl sm:text-2xl font-black text-amber-300 leading-none">
+                    ${roomView.pot}
+                  </span>
+                </div>
               </div>
             </div>
+
+            {(roomView.status === 'DEALING' || roomView.status === 'REVEALING') && (
+              <div className="mt-3 rounded-full bg-slate-950/85 px-3 py-1 text-xs font-semibold tracking-wide text-amber-200" aria-live="polite">
+                {roomView.status === 'DEALING'
+                  ? '正在发牌'
+                  : roomView.presentation?.phase === 'DEAL_UP'
+                    ? '逐张跑牌'
+                    : roomView.presentation?.phase === 'FLIP_HOLE'
+                      ? '正在摊牌'
+                      : '本局揭晓'}
+              </div>
+            )}
 
             {/* Turn Countdown Bar */}
             {roomView.status === 'PLAYING' && timeLeft > 0 && (
               <div className="mt-3 flex items-center gap-1.5 bg-slate-900/90 border border-slate-700 px-3 py-1 rounded-full text-xs font-semibold">
-                <Clock className={`w-3.5 h-3.5 ${timeLeft <= 5 ? 'text-rose-400 animate-spin' : 'text-amber-400'}`} />
+                <Clock className={`w-3.5 h-3.5 ${timeLeft <= 5 ? 'text-rose-400' : 'text-amber-400'}`} />
                 <span className={timeLeft <= 5 ? 'text-rose-400 font-bold' : 'text-slate-300'}>
                   {isMyTurn ? '你的行动回合' : '等待玩家思考'}: {timeLeft}秒
                 </span>
@@ -310,6 +383,7 @@ export const Table: React.FC<TableProps> = ({
           {me && (
             <div className="relative z-10 w-full flex flex-col items-center">
               <div
+                data-seat-id={me.id}
                 className={`w-full max-w-lg p-2.5 sm:p-3 rounded-2xl flex flex-col items-center transition ${
                   isMyTurn
                     ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-xl shadow-amber-500/20'
@@ -342,24 +416,36 @@ export const Table: React.FC<TableProps> = ({
                 </div>
 
                 {/* My Hand Cards */}
-                <div className="flex items-center gap-2 sm:gap-3 py-1">
+                <div className={`flex items-center gap-2 sm:gap-3 py-1 folded-cards ${me.isFolded ? 'is-folded' : ''}`} aria-hidden={me.isFolded}>
                   {/* Hole Card (peekable!) */}
                   {me.holeCard && (
-                    <CardView
+                    <DealtCard
                       card={me.holeCard}
                       size="md"
                       isHole
                       canPeek={!('isHidden' in me.holeCard)}
+                      deckRef={deckRef}
+                      animateDeal={shouldAnimateCard('DEAL_HOLE', me.id)}
+                      animateFlip={false}
+                      sequence={roomView.presentation?.sequence}
                     />
                   )}
                   {/* Upcards */}
                   {me.upcards.map((card, idx) => (
-                    <CardView key={card.id || idx} card={card} size="md" />
+                    <DealtCard
+                      key={card.id || idx}
+                      card={card}
+                      size="md"
+                      deckRef={deckRef}
+                      animateDeal={shouldAnimateCard('DEAL_UP', me.id) && idx === me.upcards.length - 1}
+                      animateFlip={false}
+                      sequence={roomView.presentation?.sequence}
+                    />
                   ))}
                 </div>
 
                 {/* Hand Evaluation Display */}
-                {getMyHandEvaluationText() && (
+                {!me.isFolded && getMyHandEvaluationText() && (
                   <div className="mt-1 text-xs text-amber-300 font-semibold tracking-wide">
                     {getMyHandEvaluationText()}
                   </div>
@@ -440,7 +526,7 @@ export const Table: React.FC<TableProps> = ({
 
         {/* If In SUMMARY State */}
         {roomView.status === 'SUMMARY' && (
-          <div className="bg-slate-900/95 border border-amber-500/40 rounded-2xl p-4 shadow-2xl flex flex-col items-center gap-3 backdrop-blur-md animate-fade-in">
+          <div className="bg-slate-900/95 border border-amber-500/40 rounded-2xl p-4 shadow-2xl flex flex-col items-center gap-3 backdrop-blur-md summary-enter">
             <div className="flex items-center gap-2 text-amber-400 font-extrabold text-base">
               <Trophy className="w-5 h-5 text-amber-400 fill-amber-400" />
               <span>本局结算</span>
@@ -456,7 +542,7 @@ export const Table: React.FC<TableProps> = ({
                     className="flex items-center justify-between bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800"
                   >
                     <span className="font-bold text-slate-200">
-                      {winnerPlayer ? winnerPlayer.name : '获胜者'}
+                      {winnerPlayer?.name ?? roomView.winnerNames?.[w.playerId] ?? '获胜者'}
                     </span>
                     {w.evaluation && (
                       <span className="text-amber-400 font-semibold">{w.evaluation.rankName}</span>
@@ -477,6 +563,23 @@ export const Table: React.FC<TableProps> = ({
           </div>
         )}
       </footer>
+
+      {roomView.lastAction && roomView.lastAction.amount > 0 && actionFlightSequence === roomView.lastAction.sequence && (
+        <ChipFlight
+          key={`action-${roomView.lastAction.sequence}`}
+          playerId={roomView.lastAction.playerId}
+          towardPot
+          sequence={roomView.lastAction.sequence}
+        />
+      )}
+      {roomView.presentation?.phase === 'AWARD' && awardFlightSequence === roomView.presentation.sequence && roomView.winners?.map((winner) => (
+        <ChipFlight
+          key={`award-${roomView.presentation?.sequence}-${winner.playerId}`}
+          playerId={winner.playerId}
+          towardPot={false}
+          sequence={roomView.presentation!.sequence}
+        />
+      ))}
 
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
     </div>
