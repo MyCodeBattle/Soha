@@ -3,6 +3,7 @@ import { RoomView, RoomViewPlayer } from '../../../server/src/room.js';
 import { PlayerAction, evaluateShowdownHand, evaluateVisibleHand } from '@soha/core';
 import { ChipFlight, DealtCard } from './TableMotion.js';
 import { ActionControls } from './ActionControls.js';
+import { ShowdownStage } from './ShowdownStage.js';
 import { RulesModal } from './RulesModal.js';
 import { FullscreenButton } from './FullscreenButton.js';
 import { sound } from '../utils/audio.js';
@@ -32,6 +33,18 @@ const opponentSeatSlots = [
   ['top-left', 'top-right', 'side-left', 'side-right'],
   ['top-left', 'top-center', 'top-right', 'side-left', 'side-right'],
 ];
+
+function isRoomShowdownActive(roomView: RoomView): boolean {
+  const nonFoldedParticipants = roomView.players.filter(
+    (p) => !p.isFolded && p.holeCard && !('isHidden' in p.holeCard) && p.upcards.length === 4
+  );
+  return (
+    nonFoldedParticipants.length > 1 &&
+    ((roomView.status === 'REVEALING' &&
+      (roomView.presentation?.phase === 'COMPARE' || roomView.presentation?.phase === 'AWARD')) ||
+      roomView.status === 'SUMMARY')
+  );
+}
 
 interface TableProps {
   roomView: RoomView;
@@ -86,6 +99,8 @@ export const Table: React.FC<TableProps> = ({
   const isShowingHands = roomView.status === 'SUMMARY' ||
     (roomView.status === 'REVEALING' &&
       ['FLIP_HOLE', 'COMPARE', 'AWARD'].includes(roomView.presentation?.phase ?? ''));
+
+  const isShowdownActive = isRoomShowdownActive(roomView);
 
   const revealedHandRank = (player: RoomViewPlayer) => {
     if (!isShowingHands || player.isFolded || !player.holeCard || 'isHidden' in player.holeCard || player.upcards.length !== 4) {
@@ -155,9 +170,13 @@ export const Table: React.FC<TableProps> = ({
   }, [roomView.lastAction?.sequence]);
 
   useEffect(() => {
-    if (previousStatusRef.current !== 'SUMMARY' && roomView.status === 'SUMMARY') sound.playWinFanfare();
+    if (previousStatusRef.current !== 'SUMMARY' && roomView.status === 'SUMMARY') {
+      if (!isShowdownActive) {
+        sound.playWinFanfare();
+      }
+    }
     previousStatusRef.current = roomView.status;
-  }, [roomView.status]);
+  }, [roomView.status, isShowdownActive]);
 
   const shouldAnimateCard = (phase: 'DEAL_HOLE' | 'DEAL_UP' | 'FLIP_HOLE', playerId: string) =>
     mountedRef.current && roomView.presentation?.phase === phase && roomView.presentation.playerId === playerId;
@@ -282,7 +301,7 @@ export const Table: React.FC<TableProps> = ({
           <div className="absolute inset-2 sm:inset-3 rounded-[30px] sm:rounded-[48px] border-2 border-emerald-600/20 pointer-events-none" />
 
           {/* Opponents Section (Arc layout at top) */}
-          <div data-opponent-count={opponents.length} className={`opponents-row relative z-10 w-full items-start gap-2 ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
+          <div data-opponent-count={opponents.length} className={`opponents-row relative z-10 w-full items-start gap-2 transition-all duration-500 ${isShowdownActive ? 'opacity-20 pointer-events-none filter blur-[0.5px]' : ''} ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
             {opponents.map((player, index) => {
               const isTurn = roomView.activePlayerId === player.id && roomView.status === 'PLAYING';
               const isInitiative = roomView.initiativePlayerId === player.id && roomView.status === 'PLAYING';
@@ -392,25 +411,36 @@ export const Table: React.FC<TableProps> = ({
             })}
           </div>
 
-          {/* Center Table: Pot & Status Announcement */}
-          <div className="pot-area relative z-10 flex flex-col items-center justify-center my-auto">
-            <div className="relative">
-              <div ref={deckRef} aria-hidden="true" className="absolute right-full mr-3 top-1/2 -translate-y-1/2 w-9 h-12 rounded-md border border-indigo-300/50 bg-indigo-950 shadow-lg grid place-items-center text-indigo-300 text-xl">
-                ♠
-              </div>
-              {/* Pot Box */}
-              <div data-pot className="flex items-center gap-2 bg-slate-950/80 border border-amber-500/40 px-4 py-2 rounded-2xl shadow-xl backdrop-blur-md">
-                <Coins className="w-5 h-5 text-amber-400" />
-                <div className="flex flex-col items-center">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400">底池 Pot</span>
-                  <span className="text-xl sm:text-2xl font-black text-amber-300 leading-none">
-                    ${roomView.pot}
-                  </span>
+          {/* Center Table: Showdown Stage or Pot & Status Announcement */}
+          <div className="pot-area relative z-20 flex flex-col items-center justify-center my-auto w-full">
+            {isShowdownActive ? (
+              <ShowdownStage
+                players={roomView.players}
+                winners={roomView.winners}
+                pot={roomView.pot}
+                phase={roomView.presentation?.phase}
+                isSummary={roomView.status === 'SUMMARY'}
+                myPlayerId={myPlayerId}
+              />
+            ) : (
+              <div className="relative">
+                <div ref={deckRef} aria-hidden="true" className="absolute right-full mr-3 top-1/2 -translate-y-1/2 w-9 h-12 rounded-md border border-indigo-300/50 bg-indigo-950 shadow-lg grid place-items-center text-indigo-300 text-xl">
+                  ♠
+                </div>
+                {/* Pot Box */}
+                <div data-pot className="flex items-center gap-2 bg-slate-950/80 border border-amber-500/40 px-4 py-2 rounded-2xl shadow-xl backdrop-blur-md transition-all duration-300">
+                  <Coins className="w-5 h-5 text-amber-400" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400">底池 Pot</span>
+                    <span className="text-xl sm:text-2xl font-black text-amber-300 leading-none">
+                      ${roomView.pot}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {(roomView.status === 'DEALING' || roomView.status === 'REVEALING') && (
+            {!isShowdownActive && (roomView.status === 'DEALING' || roomView.status === 'REVEALING') && (
               <div className="mt-3 rounded-full bg-slate-950/85 px-3 py-1 text-xs font-semibold tracking-wide text-amber-200" aria-live="polite">
                 {roomView.status === 'DEALING'
                   ? '正在发牌'
@@ -437,7 +467,7 @@ export const Table: React.FC<TableProps> = ({
 
           {/* My Player Cockpit at Bottom of Table */}
           {me && (
-            <div className="player-cockpit relative z-10 w-full flex flex-col items-center">
+            <div className={`player-cockpit relative z-10 w-full flex flex-col items-center transition-all duration-500 ${isShowdownActive ? 'opacity-20 pointer-events-none filter blur-[0.5px]' : ''}`}>
               <div
                 data-seat-id={me.id}
                 className={`player-seat w-full max-w-lg p-2.5 sm:p-3 rounded-2xl flex flex-col items-center transition ${

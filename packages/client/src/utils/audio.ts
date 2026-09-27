@@ -122,6 +122,65 @@ class SoundManager {
       osc.stop(this.ctx!.currentTime + idx * 0.1 + 0.35);
     });
   }
+
+  playShowdownClash() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    // Dramatic low frequency whoosh & impact
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + 0.35);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.35);
+
+    gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.35);
+  }
+
+  playStampRank() {
+    if (!this.enabled) return;
+    this.initCtx();
+    if (!this.ctx) return;
+
+    // Crisp thud + high metallic ping
+    const thud = this.ctx.createOscillator();
+    const thudGain = this.ctx.createGain();
+    thud.type = 'triangle';
+    thud.frequency.setValueAtTime(220, this.ctx.currentTime);
+    thud.frequency.exponentialRampToValueAtTime(60, this.ctx.currentTime + 0.12);
+    thudGain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+    thudGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+    thud.connect(thudGain);
+    thudGain.connect(this.ctx.destination);
+    thud.start();
+    thud.stop(this.ctx.currentTime + 0.12);
+
+    const ping = this.ctx.createOscillator();
+    const pingGain = this.ctx.createGain();
+    ping.type = 'sine';
+    ping.frequency.setValueAtTime(987.77, this.ctx.currentTime); // B5
+    pingGain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+    pingGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+    ping.connect(pingGain);
+    pingGain.connect(this.ctx.destination);
+    ping.start();
+    ping.stop(this.ctx.currentTime + 0.2);
+  }
 }
 
 export const sound = new SoundManager();

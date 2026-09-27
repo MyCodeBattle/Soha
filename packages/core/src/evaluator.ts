@@ -169,79 +169,113 @@ export function evaluateShowdownHand(cards: Card[]): ShowdownHandEvaluation {
     }
   }
 
+  function orderStraightCards(cardsToOrder: Card[], highRank: number): Card[] {
+    if (highRank === 5) {
+      const ranks = [5, 4, 3, 2, 14];
+      return ranks.map((r) => cardsToOrder.find((c) => c.rank === r)!);
+    }
+    return [...cardsToOrder].sort((a, b) => b.rank - a.rank);
+  }
+
   // 1. Straight Flush
   if (isStraight && isFlush) {
     const isRoyal = straightHighRank === 14;
+    const orderedCards = orderStraightCards(cards, straightHighRank);
     return {
       rankType: ShowdownHandRank.STRAIGHT_FLUSH,
       rankName: isRoyal ? '皇家同花顺' : '同花顺',
       tieBreakerRanks: [straightHighRank],
       cards,
+      scoringCardIds: orderedCards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 2. Four of a Kind
   if (groups[0].cards.length === 4) {
+    const orderedCards = [...groups[0].cards, ...groups[1].cards];
     return {
       rankType: ShowdownHandRank.FOUR_OF_A_KIND,
       rankName: '四条',
       tieBreakerRanks: [groups[0].rank, groups[1].rank],
       cards,
+      scoringCardIds: groups[0].cards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 3. Full House
   if (groups[0].cards.length === 3 && groups[1].cards.length === 2) {
+    const orderedCards = [...groups[0].cards, ...groups[1].cards];
     return {
       rankType: ShowdownHandRank.FULL_HOUSE,
       rankName: '葫芦',
       tieBreakerRanks: [groups[0].rank, groups[1].rank],
       cards,
+      scoringCardIds: orderedCards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 4. Flush
   if (isFlush) {
+    const orderedCards = [...cards].sort((a, b) => b.rank - a.rank);
     return {
       rankType: ShowdownHandRank.FLUSH,
       rankName: '同花',
       tieBreakerRanks: sortedRanks,
       cards,
+      scoringCardIds: orderedCards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 5. Straight
   if (isStraight) {
+    const orderedCards = orderStraightCards(cards, straightHighRank);
     return {
       rankType: ShowdownHandRank.STRAIGHT,
       rankName: '顺子',
       tieBreakerRanks: [straightHighRank],
       cards,
+      scoringCardIds: orderedCards.map((c) => c.id),
+      orderedCards,
     };
+  }
+
+  function collectKickers(fromGroupIndex: number): Card[] {
+    return groups.slice(fromGroupIndex).flatMap((g) => g.cards).sort((a, b) => b.rank - a.rank);
   }
 
   // 6. Three of a Kind
   if (groups[0].cards.length === 3) {
+    const orderedCards = [...groups[0].cards, ...collectKickers(1)];
     return {
       rankType: ShowdownHandRank.THREE_OF_A_KIND,
       rankName: '三条',
       tieBreakerRanks: [groups[0].rank, groups[1].rank, groups[2].rank],
       cards,
+      scoringCardIds: groups[0].cards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 7. Two Pair
   if (groups[0].cards.length === 2 && groups[1].cards.length === 2) {
+    const orderedCards = [...groups[0].cards, ...groups[1].cards, ...collectKickers(2)];
     return {
       rankType: ShowdownHandRank.TWO_PAIR,
       rankName: '两对',
       tieBreakerRanks: [groups[0].rank, groups[1].rank, groups[2].rank],
       cards,
+      scoringCardIds: [...groups[0].cards, ...groups[1].cards].map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 8. One Pair
   if (groups[0].cards.length === 2) {
+    const orderedCards = [...groups[0].cards, ...collectKickers(1)];
     return {
       rankType: ShowdownHandRank.ONE_PAIR,
       rankName: '一对',
@@ -252,15 +286,20 @@ export function evaluateShowdownHand(cards: Card[]): ShowdownHandEvaluation {
         groups[3].rank,
       ],
       cards,
+      scoringCardIds: groups[0].cards.map((c) => c.id),
+      orderedCards,
     };
   }
 
   // 9. High Card
+  const orderedCards = [...cards].sort((a, b) => b.rank - a.rank);
   return {
     rankType: ShowdownHandRank.HIGH_CARD,
     rankName: '高牌',
     tieBreakerRanks: sortedRanks,
     cards,
+    scoringCardIds: [orderedCards[0].id],
+    orderedCards,
   };
 }
 

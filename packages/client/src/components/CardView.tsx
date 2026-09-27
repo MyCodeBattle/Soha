@@ -7,6 +7,9 @@ interface CardViewProps {
   isHole?: boolean;
   canPeek?: boolean;
   className?: string;
+  highlight?: boolean;
+  dimmed?: boolean;
+  elevated?: boolean;
 }
 
 const SUIT_SYMBOLS: Record<Suit, string> = {
@@ -44,6 +47,9 @@ export const CardView: React.FC<CardViewProps> = ({
   isHole = false,
   canPeek = false,
   className = '',
+  highlight = false,
+  dimmed = false,
+  elevated = false,
 }) => {
   const [isPeeking, setIsPeeking] = useState(false);
   const [privacyHidden, setPrivacyHidden] = useState(false);
@@ -76,7 +82,9 @@ export const CardView: React.FC<CardViewProps> = ({
         onTouchEnd={() => canPeek && setIsPeeking(false)}
         onMouseDown={() => canPeek && setIsPeeking(true)}
         onMouseUp={() => canPeek && setIsPeeking(false)}
-        className={`poker-card ${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${className}`}
+        className={`poker-card ${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${
+          dimmed ? 'opacity-50 grayscale-[15%]' : ''
+        } ${className}`}
       >
         <div className="absolute inset-1 border border-indigo-300/30 rounded flex flex-col items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
           <span className="text-indigo-300/60 font-serif font-black text-sm select-none">
@@ -96,9 +104,13 @@ export const CardView: React.FC<CardViewProps> = ({
 
   return (
     <div
-      className={`relative select-none transition-transform duration-200 ${
-        isPeeking ? '-translate-y-2 scale-105 shadow-xl ring-2 ring-gold' : 'shadow-md'
-      } ${className}`}
+      className={`relative select-none transition-all duration-300 ${
+        isPeeking
+          ? '-translate-y-2 scale-105 shadow-xl ring-2 ring-gold'
+          : elevated
+            ? '-translate-y-2 sm:-translate-y-2.5 z-10'
+            : 'shadow-md'
+      } ${dimmed ? 'opacity-50 grayscale-[15%]' : ''} ${className}`}
       onMouseDown={() => canPeek && setIsPeeking(true)}
       onMouseUp={() => canPeek && setIsPeeking(false)}
       onMouseLeave={() => canPeek && setIsPeeking(false)}
@@ -107,7 +119,9 @@ export const CardView: React.FC<CardViewProps> = ({
     >
       <div
         data-card-face
-        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold ${isHole ? 'hole-card-face' : ''}`}
+        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold transition-all duration-300 ${
+          isHole ? 'hole-card-face' : ''
+        } ${highlight ? 'ring-2 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.7)] border-amber-300' : ''}`}
       >
         {/* Top-left rank and suit */}
         <div className={`leading-none flex flex-col items-center ${suitColor}`}>

@@ -37,6 +37,8 @@ export interface ShowdownHandEvaluation {
   // For Full House QQQ AA: [12, 14]
   tieBreakerRanks: number[];
   cards: Card[];
+  scoringCardIds: string[];
+  orderedCards: Card[];
 }
 
 export enum VisibleHandRank {
