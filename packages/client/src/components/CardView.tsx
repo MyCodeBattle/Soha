@@ -3,7 +3,7 @@ import { Card, Rank, Suit } from '@soha/core';
 
 interface CardViewProps {
   card?: Card | { isHidden: true };
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   isHole?: boolean;
   canPeek?: boolean;
   className?: string;
@@ -50,6 +50,7 @@ export const CardView: React.FC<CardViewProps> = ({
 
   // Size configurations
   const sizeClasses = {
+    xs: 'w-[clamp(22px,7vw,28px)] h-[clamp(32px,10vw,40px)] sm:w-10 sm:h-14 text-[10px] sm:text-xs rounded-md',
     sm: 'w-10 h-14 text-xs rounded-md',
     md: 'w-14 h-20 text-sm rounded-lg',
     lg: 'w-20 h-28 text-base rounded-xl',

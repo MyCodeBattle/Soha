@@ -10,7 +10,7 @@ function reduceMotion() {
 
 interface DealtCardProps {
   card: Card | { isHidden: true };
-  size: 'sm' | 'md';
+  size: 'xs' | 'sm' | 'md';
   isHole?: boolean;
   canPeek?: boolean;
   deckRef: React.RefObject<HTMLDivElement>;

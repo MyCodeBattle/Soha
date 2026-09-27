@@ -60,7 +60,7 @@ export interface RoomView {
 }
 
 type RoomStatus = 'WAITING' | 'DEALING' | 'PLAYING' | 'REVEALING' | 'SUMMARY';
-type PresentationPhase = 'DEAL_HOLE' | 'DEAL_UP' | 'ACTION' | 'FLIP_HOLE' | 'AWARD';
+type PresentationPhase = 'DEAL_HOLE' | 'DEAL_UP' | 'ACTION' | 'FLIP_HOLE' | 'COMPARE' | 'AWARD';
 
 interface PresentationFrame {
   status: 'DEALING' | 'REVEALING';
@@ -374,7 +374,7 @@ export class Room {
     return this.initialFrame(status, before.street, counts, dealtHoleIds);
   }
 
-  private appendUpcards(frames: TimedFrame[], startingFrame: PresentationFrame, target: GameState): PresentationFrame {
+  private appendUpcards(frames: TimedFrame[], startingFrame: PresentationFrame, target: GameState, holdMs = 220): PresentationFrame {
     let frame = startingFrame;
     const maxCount = Math.max(0, ...target.players.filter((player) => !player.isFolded).map((player) => player.upcards.length));
     const initialCount = Math.max(0, ...Object.values(frame.visibleUpcards));
@@ -388,7 +388,7 @@ export class Room {
           playerId: player.id,
           visibleUpcards: { [player.id]: count },
         });
-        frames.push({ frame, holdMs: 220 });
+        frames.push({ frame, holdMs });
       }
       if (count < maxCount) frames[frames.length - 1].holdMs += 300;
     }
@@ -407,8 +407,10 @@ export class Room {
           playerId: player.id,
           revealedHoleIds: [...frame.revealedHoleIds, player.id],
         });
-        frames.push({ frame, holdMs: 260 });
+        frames.push({ frame, holdMs: 800 });
       }
+      frame = copyFrame(frame, { phase: 'COMPARE', playerId: undefined });
+      frames.push({ frame, holdMs: 5000 });
     }
     frame = copyFrame(frame, { street: 'HAND_ENDED', phase: 'AWARD', playerId: undefined, awarded: true });
     frames.push({ frame, holdMs: 450 });
@@ -428,7 +430,7 @@ export class Room {
     });
     if (this.gameState.street === 'HAND_ENDED') {
       frame = copyFrame(frame, { status: 'REVEALING' });
-      frame = this.appendUpcards(frames, frame, this.gameState);
+      frame = this.appendUpcards(frames, frame, this.gameState, 500);
       this.appendShowdown(frames, frame);
       this.present(frames, 'SUMMARY');
     } else {
@@ -450,7 +452,7 @@ export class Room {
     if (!this.gameState) return;
     let frame = this.frameBeforeAction(before, 'REVEALING');
     const frames: TimedFrame[] = [{ frame, holdMs: this.lastAction?.type === 'ALL_IN' ? 400 : 220 }];
-    frame = this.appendUpcards(frames, frame, this.gameState);
+    frame = this.appendUpcards(frames, frame, this.gameState, 500);
     this.appendShowdown(frames, frame);
     this.present(frames, 'SUMMARY');
   }

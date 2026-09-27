@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RoomView } from '../../../server/src/room.js';
+import { RoomView, RoomViewPlayer } from '../../../server/src/room.js';
 import { PlayerAction, evaluateShowdownHand, evaluateVisibleHand } from '@soha/core';
 import { ChipFlight, DealtCard } from './TableMotion.js';
 import { ActionControls } from './ActionControls.js';
@@ -64,8 +64,19 @@ export const Table: React.FC<TableProps> = ({
   const me = roomView.players.find((p) => p.id === myPlayerId);
   const isHost = roomView.hostId === myPlayerId;
   const opponents = roomView.players.filter((p) => p.id !== myPlayerId);
+  const isCrowdedTable = opponents.length >= 4;
 
   const isMyTurn = roomView.status === 'PLAYING' && roomView.activePlayerId === myPlayerId;
+  const isShowingHands = roomView.status === 'SUMMARY' ||
+    (roomView.status === 'REVEALING' &&
+      ['FLIP_HOLE', 'COMPARE', 'AWARD'].includes(roomView.presentation?.phase ?? ''));
+
+  const revealedHandRank = (player: RoomViewPlayer) => {
+    if (!isShowingHands || player.isFolded || !player.holeCard || 'isHidden' in player.holeCard || player.upcards.length !== 4) {
+      return null;
+    }
+    return evaluateShowdownHand([player.holeCard, ...player.upcards]).rankName;
+  };
 
   // Sound toggle
   const handleToggleSound = () => {
@@ -161,7 +172,7 @@ export const Table: React.FC<TableProps> = ({
     const allCards = [me.holeCard, ...me.upcards];
     if (allCards.length === 5) {
       const res = evaluateShowdownHand(allCards);
-      return `当前牌型：${res.rankName}`;
+      return `${isShowingHands ? '最终牌型' : '当前牌型'}：${res.rankName}`;
     }
     if (me.upcards.length > 0) {
       const res = evaluateVisibleHand(me.upcards);
@@ -231,21 +242,22 @@ export const Table: React.FC<TableProps> = ({
       {/* Main Poker Table Area */}
       <main className="relative flex-1 flex flex-col justify-center items-center my-2 max-w-5xl w-full mx-auto">
         {/* Felt Table Board */}
-        <div className="relative w-full h-[62vh] sm:h-[68vh] rounded-[40px] sm:rounded-[60px] bg-gradient-to-b from-emerald-950 via-felt-dark to-emerald-950 border-[10px] sm:border-[16px] border-[#382212] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-3 sm:p-6 overflow-hidden">
+        <div className="relative w-full min-h-[62vh] sm:min-h-[68vh] rounded-[40px] sm:rounded-[60px] bg-gradient-to-b from-emerald-950 via-felt-dark to-emerald-950 border-[10px] sm:border-[16px] border-[#382212] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_12px_36px_rgba(0,0,0,0.8)] flex flex-col justify-between p-3 sm:p-6 overflow-hidden">
           {/* Inner Table Felt Border Line */}
           <div className="absolute inset-2 sm:inset-3 rounded-[30px] sm:rounded-[48px] border-2 border-emerald-600/20 pointer-events-none" />
 
           {/* Opponents Section (Arc layout at top) */}
-          <div className="relative z-10 w-full flex flex-wrap justify-around items-start gap-2">
+          <div className={`relative z-10 w-full items-start gap-2 ${isCrowdedTable ? 'grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-around' : 'flex flex-wrap justify-around'}`}>
             {opponents.map((player) => {
               const isTurn = roomView.activePlayerId === player.id && roomView.status === 'PLAYING';
               const isInitiative = roomView.initiativePlayerId === player.id && roomView.status === 'PLAYING';
+              const rankName = revealedHandRank(player);
 
               return (
                 <div
                   key={player.id}
                   data-seat-id={player.id}
-                  className={`flex flex-col items-center p-2 rounded-2xl transition duration-300 ${
+                  className={`flex min-w-0 flex-col items-center ${isCrowdedTable ? 'p-0.5 sm:p-2' : 'p-2'} rounded-2xl transition duration-300 ${
                     isTurn ? 'ring-2 ring-amber-400 bg-amber-500/10 shadow-lg shadow-amber-500/20 scale-105' : 'bg-slate-900/60'
                   } ${player.isFolded ? 'opacity-40 grayscale' : ''}`}
                 >
@@ -281,11 +293,11 @@ export const Table: React.FC<TableProps> = ({
                   </div>
 
                   {/* Cards Display */}
-                  <div className={`flex items-center gap-1 folded-cards ${player.isFolded ? 'is-folded' : ''}`} aria-hidden={player.isFolded}>
+                  <div className={`flex items-center ${isCrowdedTable ? 'gap-0.5 sm:gap-1' : 'gap-1'} folded-cards ${player.isFolded ? 'is-folded' : ''}`} aria-hidden={player.isFolded}>
                     {player.holeCard && (
                       <DealtCard
                         card={player.holeCard}
-                        size="sm"
+                        size={isCrowdedTable ? 'xs' : 'sm'}
                         isHole
                         deckRef={deckRef}
                         animateDeal={shouldAnimateCard('DEAL_HOLE', player.id)}
@@ -297,7 +309,7 @@ export const Table: React.FC<TableProps> = ({
                       <DealtCard
                         key={card.id || idx}
                         card={card}
-                        size="sm"
+                        size={isCrowdedTable ? 'xs' : 'sm'}
                         deckRef={deckRef}
                         animateDeal={shouldAnimateCard('DEAL_UP', player.id) && idx === player.upcards.length - 1}
                         animateFlip={false}
@@ -305,6 +317,12 @@ export const Table: React.FC<TableProps> = ({
                       />
                     ))}
                   </div>
+
+                  {rankName && (
+                    <div className="mt-1 rounded-full border border-amber-500/40 bg-slate-950/90 px-2 py-0.5 text-[11px] font-bold text-amber-200">
+                      {rankName}
+                    </div>
+                  )}
 
                   {/* Status Indicator */}
                   <div className="mt-1 flex items-center gap-1">
@@ -364,6 +382,8 @@ export const Table: React.FC<TableProps> = ({
                     ? '逐张跑牌'
                     : roomView.presentation?.phase === 'FLIP_HOLE'
                       ? '正在摊牌'
+                      : roomView.presentation?.phase === 'COMPARE'
+                        ? '比牌中 · 查看每位玩家的手牌与牌型'
                       : '本局揭晓'}
               </div>
             )}

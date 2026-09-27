@@ -56,23 +56,28 @@ describe('room presentation through player views', () => {
     expect(view.players.map((player) => player.chips)).toEqual([0, 0]);
     expect(view.pot).toBe(2000);
 
-    vi.advanceTimersByTime(250);
+    vi.advanceTimersByTime(219);
+    expect(room.getPlayerView('p1').players.map((player) => player.upcards.length)).toEqual([1, 1]);
+    vi.advanceTimersByTime(1);
     view = room.getPlayerView('p1');
     expect(view.players.map((player) => player.upcards.length)).toEqual([2, 1]);
 
-    vi.advanceTimersByTime(750);
+    vi.advanceTimersByTime(499);
     view = room.getPlayerView('p1');
-    expect(view.status).toBe('REVEALING');
-    expect(view.players.every((player) => player.upcards.length < 4)).toBe(true);
-    expect(view.winners).toBeUndefined();
+    expect(view.players.map((player) => player.upcards.length)).toEqual([2, 1]);
+    vi.advanceTimersByTime(1);
+    expect(room.getPlayerView('p1').players.map((player) => player.upcards.length)).toEqual([2, 2]);
 
-    vi.advanceTimersByTime(1550);
+    for (let step = 0; step < 30 && room.getPlayerView('p1').presentation?.phase !== 'COMPARE'; step += 1) {
+      vi.advanceTimersToNextTimer();
+    }
     view = room.getPlayerView('p1');
+    expect(view.presentation?.phase).toBe('COMPARE');
     expect(view.players.map((player) => player.upcards.length)).toEqual([4, 4]);
     expect('isHidden' in view.players[1].holeCard!).toBe(false);
     expect(view.winners).toBeUndefined();
 
-    vi.advanceTimersByTime(4500);
+    vi.advanceTimersByTime(5500);
     view = room.getPlayerView('p1');
     expect(view.status).toBe('SUMMARY');
     expect(view.players.map((player) => player.upcards.length)).toEqual([4, 4]);
@@ -80,6 +85,50 @@ describe('room presentation through player views', () => {
     expect(view.winners?.length).toBeGreaterThan(0);
     expect(view.pot).toBe(0);
     expect(view.players.reduce((sum, player) => sum + player.chips, 0)).toBe(2000);
+  });
+
+  it('lets every player compare revealed hands for five seconds before the award', () => {
+    vi.useFakeTimers();
+    const room = createRoom();
+    room.startHand();
+    vi.advanceTimersByTime(3000);
+    room.executeAction(room.getPlayerView('p1').activePlayerId!, { type: 'ALL_IN' });
+    room.executeAction(room.getPlayerView('p1').activePlayerId!, { type: 'CALL' });
+
+    for (let step = 0; step < 30 && room.getPlayerView('p1').presentation?.phase !== 'FLIP_HOLE'; step += 1) {
+      vi.advanceTimersToNextTimer();
+    }
+    let view = room.getPlayerView('p1');
+    expect(view.presentation?.phase).toBe('FLIP_HOLE');
+    expect(view.players[1].holeCard).toEqual({ isHidden: true });
+
+    vi.advanceTimersByTime(799);
+    expect(room.getPlayerView('p1').presentation?.playerId).toBe(view.presentation?.playerId);
+    vi.advanceTimersByTime(1);
+    view = room.getPlayerView('p1');
+    expect(view.presentation?.phase).toBe('FLIP_HOLE');
+    expect(view.players[1].holeCard).not.toEqual({ isHidden: true });
+
+    vi.advanceTimersByTime(800);
+    view = room.getPlayerView('p1');
+    expect(view.presentation?.phase).toBe('COMPARE');
+    expect(view.players.every((player) => player.upcards.length === 4)).toBe(true);
+    expect(view.winners).toBeUndefined();
+    expect(view.pot).toBe(2000);
+    const reconnectingView = room.getPlayerView('p2');
+    expect(reconnectingView.presentation?.phase).toBe('COMPARE');
+    expect(reconnectingView.presentation?.sequence).toBe(view.presentation?.sequence);
+    expect(reconnectingView.players[0].holeCard).not.toEqual({ isHidden: true });
+    expect(reconnectingView.winners).toBeUndefined();
+
+    vi.advanceTimersByTime(4999);
+    expect(room.getPlayerView('p1').presentation?.phase).toBe('COMPARE');
+    expect(room.getPlayerView('p2').winners).toBeUndefined();
+    vi.advanceTimersByTime(1);
+    view = room.getPlayerView('p1');
+    expect(view.presentation?.phase).toBe('AWARD');
+    expect(view.winners?.length).toBeGreaterThan(0);
+    expect(view.pot).toBe(0);
   });
 
   it('never exposes a winner’s hole card when everyone else folds', () => {
@@ -161,7 +210,7 @@ describe('room presentation through player views', () => {
     room.removePlayer('p2');
 
     expect(room.getPlayerView('p1').players).toHaveLength(2);
-    vi.advanceTimersByTime(6000);
+    vi.advanceTimersByTime(15000);
     const summary = room.getPlayerView('p1');
     expect(summary.status).toBe('SUMMARY');
     expect(summary.players).toHaveLength(2);
