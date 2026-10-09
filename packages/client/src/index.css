@@ -23,6 +23,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+.table-page {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.table-page :is(textarea, input:is(:not([type]), [type="text"], [type="search"], [type="email"], [type="url"], [type="tel"], [type="password"], [type="number"]), [contenteditable="true"], [contenteditable=""]) {
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+[data-peek-surface="true"] {
+  touch-action: none;
+}
+
 @keyframes summary-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

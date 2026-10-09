@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Card, Rank, Suit } from '@soha/core';
 
 interface CardViewProps {
@@ -53,6 +53,57 @@ export const CardView: React.FC<CardViewProps> = ({
 }) => {
   const [isPeeking, setIsPeeking] = useState(false);
   const [privacyHidden, setPrivacyHidden] = useState(false);
+  const activePointer = useRef<{ id: number; element: HTMLDivElement } | null>(null);
+  const actualCard = card && !('isHidden' in card) ? card : undefined;
+  const cardIdentity = actualCard?.id;
+  const isPeekable = isHole && canPeek && !!actualCard;
+
+  const stopPeeking = useCallback(() => {
+    const pointer = activePointer.current;
+    activePointer.current = null;
+    if (pointer?.element.hasPointerCapture(pointer.id)) {
+      pointer.element.releasePointerCapture(pointer.id);
+    }
+    setIsPeeking(false);
+  }, []);
+
+  useLayoutEffect(() => {
+    stopPeeking();
+  }, [cardIdentity, isPeekable, stopPeeking]);
+
+  useEffect(() => {
+    if (!isPeekable) return;
+    const handleVisibilityChange = () => {
+      if (document.hidden) stopPeeking();
+    };
+    window.addEventListener('blur', stopPeeking);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('blur', stopPeeking);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      const pointer = activePointer.current;
+      activePointer.current = null;
+      if (pointer?.element.hasPointerCapture(pointer.id)) {
+        pointer.element.releasePointerCapture(pointer.id);
+      }
+    };
+  }, [isPeekable, stopPeeking]);
+
+  const startPeeking = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isPeekable || !event.isPrimary || event.button !== 0 || activePointer.current) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    activePointer.current = { id: event.pointerId, element: event.currentTarget };
+    setIsPeeking(true);
+  };
+
+  const finishPeeking = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointer.current?.id === event.pointerId) stopPeeking();
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    // A chorded mouse release emits pointermove until its final button is released.
+    if (event.pointerType === 'mouse' && (event.buttons & 1) === 0) finishPeeking(event);
+  };
 
   // Size configurations
   const sizeClasses = {
@@ -71,36 +122,11 @@ export const CardView: React.FC<CardViewProps> = ({
     );
   }
 
-  const isHidden = 'isHidden' in card || (isHole && canPeek && privacyHidden && !isPeeking);
+  const isHidden = 'isHidden' in card || (isHole && privacyHidden && !isPeeking);
 
-  // Face down card (opponent's hole card or privacy hidden)
-  if (isHidden) {
-    return (
-      <div
-        onClick={() => canPeek && setPrivacyHidden(false)}
-        onTouchStart={() => canPeek && setIsPeeking(true)}
-        onTouchEnd={() => canPeek && setIsPeeking(false)}
-        onMouseDown={() => canPeek && setIsPeeking(true)}
-        onMouseUp={() => canPeek && setIsPeeking(false)}
-        className={`poker-card ${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden cursor-pointer ${
-          dimmed ? 'opacity-50 grayscale-[15%]' : ''
-        } ${className}`}
-      >
-        <div className="absolute inset-1 border border-indigo-300/30 rounded flex flex-col items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
-          <span className="text-indigo-300/60 font-serif font-black text-sm select-none">
-            ♠
-          </span>
-          {canPeek && (
-            <span className="text-[8px] text-amber-300 font-bold mt-1">按住偷瞄</span>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const suitSymbol = SUIT_SYMBOLS[card.suit];
-  const suitColor = SUIT_COLORS[card.suit];
-  const rankStr = formatRank(card.rank);
+  const suitSymbol = actualCard ? SUIT_SYMBOLS[actualCard.suit] : '';
+  const suitColor = actualCard ? SUIT_COLORS[actualCard.suit] : '';
+  const rankStr = actualCard ? formatRank(actualCard.rank) : '';
 
   return (
     <div
@@ -111,52 +137,68 @@ export const CardView: React.FC<CardViewProps> = ({
             ? '-translate-y-2 sm:-translate-y-2.5 z-10'
             : 'shadow-md'
       } ${dimmed ? 'opacity-50 grayscale-[15%]' : ''} ${className}`}
-      onMouseDown={() => canPeek && setIsPeeking(true)}
-      onMouseUp={() => canPeek && setIsPeeking(false)}
-      onMouseLeave={() => canPeek && setIsPeeking(false)}
-      onTouchStart={() => canPeek && setIsPeeking(true)}
-      onTouchEnd={() => canPeek && setIsPeeking(false)}
     >
       <div
-        data-card-face
-        className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold transition-all duration-300 ${
-          isHole ? 'hole-card-face' : ''
-        } ${highlight ? 'ring-2 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.7)] border-amber-300' : ''}`}
+        data-peek-surface={isPeekable}
+        onPointerDown={startPeeking}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishPeeking}
+        onPointerCancel={finishPeeking}
+        onLostPointerCapture={finishPeeking}
       >
-        {/* Top-left rank and suit */}
-        <div className={`leading-none flex flex-col items-center ${suitColor}`}>
-          <span className="font-bold tracking-tighter">{rankStr}</span>
-          <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
-        </div>
+        {isHidden ? (
+          <div className={`poker-card ${sizeClasses} relative bg-gradient-to-br from-blue-900 via-indigo-950 to-blue-950 border border-indigo-400/40 shadow-md flex items-center justify-center overflow-hidden ${isPeekable ? 'cursor-pointer' : ''}`}>
+            <div className="absolute inset-1 border border-indigo-300/30 rounded flex flex-col items-center justify-center bg-[radial-gradient(#4338ca_1px,transparent_1px)] [background-size:6px_6px]">
+              <span className="text-indigo-300/60 font-serif font-black text-sm">♠</span>
+              {isPeekable && (
+                <span className="text-[8px] text-amber-300 font-bold mt-1">按住偷瞄</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            data-card-face
+            className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold transition-all duration-300 ${
+              isHole ? 'hole-card-face' : ''
+            } ${highlight ? 'ring-2 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.7)] border-amber-300' : ''}`}
+          >
+            {/* Top-left rank and suit */}
+            <div className={`leading-none flex flex-col items-center ${suitColor}`}>
+              <span className="font-bold tracking-tighter">{rankStr}</span>
+              <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
+            </div>
 
-        {/* Center watermark suit */}
-        <div
-          className={`absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none text-2xl sm:text-4xl ${suitColor}`}
-        >
-          {suitSymbol}
-        </div>
+            {/* Center watermark suit */}
+            <div
+              className={`absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none text-2xl sm:text-4xl ${suitColor}`}
+            >
+              {suitSymbol}
+            </div>
 
-        {/* Bottom-right inverted rank and suit */}
-        <div className={`leading-none flex flex-col items-center rotate-180 ${suitColor}`}>
-          <span className="font-bold tracking-tighter">{rankStr}</span>
-          <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
-        </div>
+            {/* Bottom-right inverted rank and suit */}
+            <div className={`leading-none flex flex-col items-center rotate-180 ${suitColor}`}>
+              <span className="font-bold tracking-tighter">{rankStr}</span>
+              <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
+            </div>
 
-        {/* Hole Card Indicator */}
-        {isHole && (
-          <div className="hole-card-indicator absolute top-0 right-0 bg-gold-dark text-[9px] text-slate-950 font-bold px-1 rounded-bl leading-none py-0.5">
-            暗
+            {/* Hole Card Indicator */}
+            {isHole && (
+              <div className="hole-card-indicator absolute top-0 right-0 bg-gold-dark text-[9px] text-slate-950 font-bold px-1 rounded-bl leading-none py-0.5">
+                暗
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {canPeek && (
+      {isPeekable && (
         <div className="flex items-center justify-center gap-1 mt-1">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setPrivacyHidden(!privacyHidden);
+              stopPeeking();
+              setPrivacyHidden((hidden) => !hidden);
             }}
             className="text-[9px] text-amber-300 hover:text-amber-200 bg-slate-900/80 px-1.5 py-0.5 rounded border border-amber-500/30"
           >

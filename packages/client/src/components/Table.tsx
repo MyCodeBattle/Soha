@@ -34,6 +34,13 @@ const opponentSeatSlots = [
   ['top-left', 'top-center', 'top-right', 'side-left', 'side-right'],
 ];
 
+function preventBrowserInteraction(event: React.SyntheticEvent) {
+  const target = event.target;
+  if (target instanceof HTMLElement &&
+    (target.isContentEditable || target.closest('textarea, input:is(:not([type]), [type="text"], [type="search"], [type="email"], [type="url"], [type="tel"], [type="password"], [type="number"])'))) return;
+  event.preventDefault();
+}
+
 function isRoomShowdownActive(roomView: RoomView): boolean {
   const nonFoldedParticipants = roomView.players.filter(
     (p) => !p.isFolded && p.holeCard && !('isHidden' in p.holeCard) && p.upcards.length === 4
@@ -220,6 +227,8 @@ export const Table: React.FC<TableProps> = ({
     <div
       className="table-page relative min-h-screen bg-slate-950 flex flex-col justify-between overflow-x-hidden p-2 sm:p-4 text-slate-100"
       data-has-footer={isMyTurn || roomView.status === 'WAITING' || roomView.status === 'SUMMARY'}
+      onContextMenu={preventBrowserInteraction}
+      onDragStart={preventBrowserInteraction}
     >
       {/* Top Header */}
       <header className="table-header flex items-center justify-between max-w-6xl w-full mx-auto px-2 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl backdrop-blur-sm z-30">
@@ -509,7 +518,7 @@ export const Table: React.FC<TableProps> = ({
                       card={me.holeCard}
                       size="md"
                       isHole
-                      canPeek={!('isHidden' in me.holeCard)}
+                      canPeek={!me.isFolded && !('isHidden' in me.holeCard)}
                       deckRef={deckRef}
                       animateDeal={shouldAnimateCard('DEAL_HOLE', me.id)}
                       animateFlip={false}
