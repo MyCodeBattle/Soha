@@ -20,10 +20,16 @@ npm run build
 git push origin main
 ```
 
-然后一条命令更新服务器：
+在 ldy 的项目根目录执行：
 
 ```bash
-ssh ldy 'bash /root/Codes/Soha/deploy/update.sh'
+./update.sh
+```
+
+也可以从本地远程更新：
+
+```bash
+ssh ldy 'cd ~/Codes/Soha && ./update.sh'
 ```
 
 脚本要求服务器工作区干净且位于 main，通过 `git pull --ff-only origin main`
@@ -39,7 +45,8 @@ ssh ldy 'bash /root/Codes/Soha/deploy/update.sh'
 ```bash
 mkdir -p /root/Codes
 git clone --branch main git@github.com:MyCodeBattle/Soha.git /root/Codes/Soha
-bash /root/Codes/Soha/deploy/update.sh
+cd /root/Codes/Soha
+./update.sh
 systemctl enable soha
 ```
 
@@ -68,6 +75,6 @@ curl -f http://127.0.0.1:3001/api/health
 curl -f https://soha.catsith.cc/api/health
 ```
 
-修复已推送到 GitHub 后，执行 `git switch main`，再运行 `bash deploy/update.sh`。
+修复已推送到 GitHub 后，执行 `git switch main`，再运行 `./update.sh`。
 
 房间和牌局保存在进程内存中；更新、回退或服务重启后，已有房间和邀请链接失效。
