@@ -160,7 +160,8 @@ app.get('*', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`[ShowHand Server] Running on http://localhost:${PORT}`);
+const PORT = Number(process.env.PORT || 3001);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  console.log(`[ShowHand Server] Running on http://${HOST}:${PORT}`);
 });
