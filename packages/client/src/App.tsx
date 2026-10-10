@@ -4,6 +4,8 @@ import { RoomView } from '../../server/src/room.js';
 import { PlayerAction } from '@soha/core';
 import { Lobby } from './components/Lobby.js';
 import { Table } from './components/Table.js';
+import type { RoomEntryResult } from '../../server/src/room-registry.js';
+import { buildInviteUrl } from './utils/invitation.js';
 
 export const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -21,6 +23,31 @@ export const App: React.FC = () => {
   const [roomView, setRoomView] = useState<RoomView | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  useEffect(() => {
+    if (!errorMessage) return;
+    const timer = window.setTimeout(() => setErrorMessage(''), 4000);
+    return () => window.clearTimeout(timer);
+  }, [errorMessage]);
+
+  const finishRoomEntry = (res: RoomEntryResult) => {
+    setIsConnecting(false);
+    if (!res.success) {
+      setRoomView(null);
+      setErrorMessage(res.error);
+      return;
+    }
+    setErrorMessage('');
+    setPlayerId(res.playerId);
+    localStorage.setItem('soha_pid', res.playerId);
+    window.history.replaceState(null, '', buildInviteUrl(res));
+  };
+
+  const entryCallback = (err: Error | null, res?: RoomEntryResult) => {
+    finishRoomEntry(err || !res
+      ? { success: false, error: '连接房间超时，请稍后重试' }
+      : res);
+  };
 
   // Save nickname changes
   const handleNameChange = (name: string) => {
@@ -42,19 +69,32 @@ export const App: React.FC = () => {
     newSocket.on('error_msg', ({ message }: { message: string }) => {
       setErrorMessage(message);
       setIsConnecting(false);
-      setTimeout(() => setErrorMessage(''), 4000);
     });
 
-    // Check URL params for ?room=XXXXXX
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlRoom = urlParams.get('room');
-    if (urlRoom && newSocket) {
-      newSocket.emit('join_room', {
+    // Rejoin the same room instance on initial connection and reconnection.
+    newSocket.on('connect', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlRoom = urlParams.get('room');
+      const inviteToken = urlParams.get('invite');
+      if (urlRoom === null && inviteToken === null) return;
+      if (!urlRoom || !/^[1-9]\d$/.test(urlRoom) || !inviteToken) {
+        finishRoomEntry({ success: false, error: '邀请链接无效' });
+        return;
+      }
+      setErrorMessage('');
+      setIsConnecting(true);
+      newSocket.timeout(10000).emit('join_room', {
         roomId: urlRoom,
-        playerName,
-        playerId,
-      });
-    }
+        inviteToken,
+        playerName: localStorage.getItem('soha_name') || playerName,
+        playerId: localStorage.getItem('soha_pid') || playerId,
+      }, entryCallback);
+    });
+
+    newSocket.on('connect_error', () => {
+      setIsConnecting(false);
+      setErrorMessage('无法连接服务器，请稍后重试');
+    });
 
     return () => {
       newSocket.disconnect();
@@ -62,37 +102,30 @@ export const App: React.FC = () => {
   }, []);
 
   const handleCreateRoom = (ante: number) => {
-    if (!socket) return;
+    if (!socket?.connected) {
+      setErrorMessage('尚未连接服务器，请稍后再试');
+      return;
+    }
+    setErrorMessage('');
     setIsConnecting(true);
-    socket.emit(
+    socket.timeout(10000).emit(
       'create_room',
       { playerName, ante },
-      (res: { success: boolean; roomId: string; playerId: string }) => {
-        setIsConnecting(false);
-        if (res.success) {
-          setPlayerId(res.playerId);
-          localStorage.setItem('soha_pid', res.playerId);
-          window.history.replaceState(null, '', `?room=${res.roomId}`);
-        }
-      }
+      entryCallback
     );
   };
 
   const handleJoinRoom = (roomId: string) => {
-    if (!socket) return;
+    if (!socket?.connected) {
+      setErrorMessage('尚未连接服务器，请稍后再试');
+      return;
+    }
+    setErrorMessage('');
     setIsConnecting(true);
-    socket.emit(
+    socket.timeout(10000).emit(
       'join_room',
       { roomId, playerName, playerId },
-      (res: { success: boolean; error?: string; roomId?: string; playerId?: string }) => {
-        setIsConnecting(false);
-        if (!res.success) {
-          setErrorMessage(res.error || '加入房间失败');
-          setTimeout(() => setErrorMessage(''), 4000);
-        } else if (res.roomId) {
-          window.history.replaceState(null, '', `?room=${res.roomId}`);
-        }
-      }
+      entryCallback
     );
   };
 

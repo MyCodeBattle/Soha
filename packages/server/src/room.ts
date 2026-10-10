@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   ActionType,
   Card,
@@ -31,6 +32,7 @@ export interface PlayerActionOptions {
 
 export interface RoomView {
   roomId: string;
+  inviteToken: string;
   hostId: string;
   ante: number;
   status: RoomStatus;
@@ -90,6 +92,7 @@ function copyFrame(frame: PresentationFrame, changes: Partial<PresentationFrame>
 
 export class Room {
   id: string;
+  readonly inviteToken = randomUUID();
   hostId: string;
   ante: number = 10;
   players: Player[] = [];
@@ -121,7 +124,7 @@ export class Room {
         this.removePlayerNow(departedId);
       }
       if (this.players.length >= 6) {
-        throw new Error('Room is full (max 6 players)');
+        throw new Error('房间已满（最多 6 人）');
       }
       player = {
         id: playerId,
@@ -204,12 +207,23 @@ export class Room {
     if (!player || player.isBot) return;
 
     this.socketMap.delete(playerId);
+    const previousTimer = this.disconnectTimers.get(playerId);
+    if (previousTimer) clearTimeout(previousTimer);
     // 30 seconds grace period
     const timer = setTimeout(() => {
       this.removePlayer(playerId);
     }, 30000);
     this.disconnectTimers.set(playerId, timer);
     this.broadcast();
+  }
+
+  dispose() {
+    this.clearTurnTimer();
+    this.clearPresentationTimer();
+    for (const timer of this.disconnectTimers.values()) clearTimeout(timer);
+    this.disconnectTimers.clear();
+    this.socketMap.clear();
+    this.onStateChange = () => {};
   }
 
   toggleReady(playerId: string, isReady: boolean) {
@@ -573,6 +587,7 @@ export class Room {
 
     return {
       roomId: this.id,
+      inviteToken: this.inviteToken,
       hostId: this.hostId,
       ante: this.ante,
       status: this.status,

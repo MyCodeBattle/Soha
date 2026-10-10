@@ -139,7 +139,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 <Users className="w-4 h-4 text-emerald-400" />
                 <h3 className="font-bold text-sm text-slate-100">加入已有房间</h3>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3">输入好友发送的 6 位房间码</p>
+              <p className="text-[11px] text-slate-400 mb-3">输入好友发送的两位数字房间码（10–99）</p>
 
               <label className="block text-[11px] font-semibold text-slate-400 mb-1.5">
                 房间码
@@ -147,15 +147,17 @@ export const Lobby: React.FC<LobbyProps> = ({
               <input
                 type="text"
                 value={roomCodeInput}
-                maxLength={6}
-                onChange={(e) => setRoomCodeInput(e.target.value.toUpperCase())}
-                placeholder="例如：A9K3F2"
-                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-3 py-2 text-center text-sm font-mono tracking-widest uppercase outline-none transition"
+                maxLength={2}
+                inputMode="numeric"
+                pattern="[1-9][0-9]"
+                onChange={(e) => setRoomCodeInput(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                placeholder="例如：32"
+                className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-3 py-2 text-center text-sm font-mono tracking-widest outline-none transition"
               />
             </div>
 
             <button
-              disabled={isConnecting || !playerName.trim() || roomCodeInput.length !== 6}
+              disabled={isConnecting || !playerName.trim() || !/^[1-9]\d$/.test(roomCodeInput)}
               onClick={() => onJoinRoom(roomCodeInput)}
               className="w-full py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white font-bold rounded-xl text-xs sm:text-sm transition shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-1.5"
             >

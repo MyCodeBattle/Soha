@@ -6,12 +6,11 @@ import { ActionControls } from './ActionControls.js';
 import { ShowdownStage } from './ShowdownStage.js';
 import { RulesModal } from './RulesModal.js';
 import { FullscreenButton } from './FullscreenButton.js';
+import { InviteButton } from './InviteButton.js';
 import { sound } from '../utils/audio.js';
 import {
   Volume2,
   VolumeX,
-  Copy,
-  Check,
   Bot,
   User,
   Crown,
@@ -76,7 +75,6 @@ export const Table: React.FC<TableProps> = ({
   onStartGame,
   onLeaveRoom,
 }) => {
-  const [copied, setCopied] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(sound.isEnabled());
@@ -120,13 +118,6 @@ export const Table: React.FC<TableProps> = ({
   const handleToggleSound = () => {
     const next = sound.toggleSound();
     setSoundEnabled(next);
-  };
-
-  // Copy room link
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(roomView.roomId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   // Timer countdown
@@ -238,14 +229,8 @@ export const Table: React.FC<TableProps> = ({
             <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm tracking-wider">
               {roomView.roomId}
             </span>
-            <button
-              onClick={handleCopyLink}
-              className="p-1 hover:text-amber-300 text-slate-400 transition"
-              title="复制房间码"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
           </div>
+          <InviteButton key={roomView.inviteToken} roomId={roomView.roomId} inviteToken={roomView.inviteToken} />
 
           <div className="hidden sm:flex items-center gap-2 text-xs text-slate-300">
             <span>底注: <strong className="text-amber-400">${roomView.ante}</strong></span>

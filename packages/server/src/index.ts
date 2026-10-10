@@ -6,6 +6,7 @@ import cors from 'cors';
 import { Server, Socket } from 'socket.io';
 import { PlayerAction } from '@soha/core';
 import { Room } from './room.js';
+import { RoomRegistry, type RoomEntryResult } from './room-registry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,16 +31,7 @@ const io = new Server(server, {
   },
 });
 
-const rooms: Map<string, Room> = new Map();
-
-function generateRoomCode(): string {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+const rooms = new RoomRegistry(broadcastRoom);
 
 function broadcastRoom(room: Room) {
   for (const player of room.players) {
@@ -54,66 +46,59 @@ function broadcastRoom(room: Room) {
 
 io.on('connection', (socket: Socket) => {
   let currentPlayerId: string | null = null;
-  let currentRoomId: string | null = null;
+  let currentRoom: Room | null = null;
+
+  const getCurrentRoom = () => {
+    if (!currentRoom || !currentPlayerId || !rooms.isCurrent(currentRoom) ||
+      currentRoom.socketMap.get(currentPlayerId) !== socket.id) return null;
+    return currentRoom;
+  };
+
+  const enterRoom = (room: Room, playerId: string, callback?: (result: RoomEntryResult) => void) => {
+    if (currentRoom && currentPlayerId && (currentRoom !== room || currentPlayerId !== playerId)) {
+      rooms.disconnect(currentRoom, currentPlayerId, socket.id);
+      socket.leave(currentRoom.id);
+    }
+    currentPlayerId = playerId;
+    currentRoom = room;
+    socket.join(room.id);
+    callback?.({ success: true, roomId: room.id, playerId, inviteToken: room.inviteToken });
+    room.broadcast();
+  };
 
   socket.on('create_room', ({ playerName, ante }: { playerName: string; ante?: number }, callback) => {
-    const roomId = generateRoomCode();
     const playerId = `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const room = new Room(roomId, playerId, () => broadcastRoom(room));
-    if (ante && ante > 0) room.ante = ante;
-
-    rooms.set(roomId, room);
-    room.socketMap.set(playerId, socket.id);
-    room.addPlayer(playerId, playerName || '玩家');
-
-    currentPlayerId = playerId;
-    currentRoomId = roomId;
-    socket.join(roomId);
-
-    if (callback) {
-      callback({ success: true, roomId, playerId });
+    try {
+      const room = rooms.create({ playerId, playerName: playerName || '玩家', socketId: socket.id, ante });
+      enterRoom(room, playerId, callback);
+    } catch (err) {
+      callback?.({ success: false, error: err instanceof Error ? err.message : '创建房间失败' });
     }
-    broadcastRoom(room);
   });
 
-  socket.on('join_room', ({ roomId, playerName, playerId: existingId }: { roomId: string; playerName: string; playerId?: string }, callback) => {
-    const code = roomId.trim().toUpperCase();
-    const room = rooms.get(code);
-
-    if (!room) {
-      if (callback) callback({ success: false, error: '房间不存在' });
-      return;
-    }
-
+  socket.on('join_room', ({ roomId, playerName, playerId: existingId, inviteToken }: {
+    roomId: string; playerName: string; playerId?: string; inviteToken?: string;
+  }, callback) => {
     const playerId = existingId || `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     try {
-      room.socketMap.set(playerId, socket.id);
-      room.addPlayer(playerId, playerName || '新玩家');
-
-      currentPlayerId = playerId;
-      currentRoomId = code;
-      socket.join(code);
-
-      if (callback) {
-        callback({ success: true, roomId: code, playerId });
-      }
-      broadcastRoom(room);
-    } catch (err: any) {
-      if (callback) callback({ success: false, error: err.message || '加入失败' });
+      const room = rooms.join({ roomId, playerId, playerName: playerName || '新玩家', socketId: socket.id, inviteToken });
+      enterRoom(room, playerId, callback);
+    } catch (err) {
+      callback?.({ success: false, error: err instanceof Error ? err.message : '加入房间失败' });
     }
   });
 
   socket.on('toggle_ready', ({ isReady }: { isReady: boolean }) => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room) {
       room.toggleReady(currentPlayerId, isReady);
     }
   });
 
   socket.on('add_bot', () => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room && room.hostId === currentPlayerId) {
       try {
         room.addBot();
@@ -124,16 +109,16 @@ io.on('connection', (socket: Socket) => {
   });
 
   socket.on('remove_bot', ({ botId }: { botId: string }) => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room && room.hostId === currentPlayerId) {
       room.removeBot(botId);
     }
   });
 
   socket.on('player_action', (action: PlayerAction) => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room) {
       try {
         room.executeAction(currentPlayerId, action);
@@ -144,27 +129,24 @@ io.on('connection', (socket: Socket) => {
   });
 
   socket.on('reset_chips', () => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room) {
       room.resetChips(currentPlayerId);
     }
   });
 
   socket.on('start_game', () => {
-    if (!currentRoomId || !currentPlayerId) return;
-    const room = rooms.get(currentRoomId);
+    if (!currentPlayerId) return;
+    const room = getCurrentRoom();
     if (room && room.hostId === currentPlayerId) {
       room.startHand();
     }
   });
 
   socket.on('disconnect', () => {
-    if (currentRoomId && currentPlayerId) {
-      const room = rooms.get(currentRoomId);
-      if (room) {
-        room.handleDisconnect(currentPlayerId);
-      }
+    if (currentRoom && currentPlayerId) {
+      rooms.disconnect(currentRoom, currentPlayerId, socket.id);
     }
   });
 });
