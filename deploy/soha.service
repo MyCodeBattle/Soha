@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=soha
 Group=soha
-WorkingDirectory=/srv/soha/current
+WorkingDirectory=/root/Codes/Soha
 Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=3001
@@ -17,7 +17,8 @@ TimeoutStopSec=10
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=tmpfs
+BindReadOnlyPaths=/root/Codes/Soha
 
 [Install]
 WantedBy=multi-user.target
