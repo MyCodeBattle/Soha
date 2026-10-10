@@ -6,6 +6,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "npm run test:layout",
+    "test:layout": "npm run build -w @soha/core && node scripts/check-card-layout.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -18,6 +20,7 @@
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
+    "@playwright/cli": "0.1.22",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",

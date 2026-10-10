@@ -38,6 +38,12 @@ npm install
 npm test
 ```
 
+前端牌面布局检查会启动真实浏览器，需要本机已安装 Chrome；也可运行 `npx playwright install chrome` 安装。单独运行布局检查：
+
+```bash
+npm run test:layout -w @soha/client
+```
+
 ### 3. 开发模式
 启动前端 Vite 开发服务器（http://localhost:3000）与后端 Socket 服务（http://localhost:3001）：
 ```bash

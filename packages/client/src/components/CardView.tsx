@@ -127,6 +127,18 @@ export const CardView: React.FC<CardViewProps> = ({
   const suitSymbol = actualCard ? SUIT_SYMBOLS[actualCard.suit] : '';
   const suitColor = actualCard ? SUIT_COLORS[actualCard.suit] : '';
   const rankStr = actualCard ? formatRank(actualCard.rank) : '';
+  const facePadding = size === 'xs' ? 'p-px sm:p-1' : 'p-1';
+  const cornerLayout = size === 'xs'
+    ? 'flex-row justify-center text-[9px] sm:flex-col sm:text-xs'
+    : 'flex-col';
+  const suitSize = size === 'xs'
+    ? 'text-[8px] sm:text-[10px]'
+    : size === 'sm'
+      ? 'text-[10px]'
+      : 'text-[10px] sm:text-xs';
+  const holeIndicatorLayout = size === 'xs' || size === 'sm'
+    ? 'top-1/2 -translate-y-1/2 text-[8px] px-0.5 py-px rounded-l'
+    : 'top-0 text-[9px] px-1 py-0.5 rounded-bl';
 
   return (
     <div
@@ -158,14 +170,14 @@ export const CardView: React.FC<CardViewProps> = ({
         ) : (
           <div
             data-card-face
-            className={`poker-card ${sizeClasses} relative bg-white border border-slate-300 shadow flex flex-col justify-between p-1 overflow-hidden font-semibold transition-all duration-300 ${
+            className={`poker-card ${sizeClasses} ${facePadding} relative bg-white border border-slate-300 shadow flex flex-col justify-between overflow-hidden font-semibold transition-all duration-300 ${
               isHole ? 'hole-card-face' : ''
             } ${highlight ? 'ring-2 ring-amber-400 shadow-[0_0_18px_rgba(251,191,36,0.7)] border-amber-300' : ''}`}
           >
             {/* Top-left rank and suit */}
-            <div className={`leading-none flex flex-col items-center ${suitColor}`}>
+            <div className={`leading-none sm:leading-none flex shrink-0 items-center ${cornerLayout} ${suitColor}`}>
               <span className="font-bold tracking-tighter">{rankStr}</span>
-              <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
+              <span className={`${suitSize} leading-none sm:leading-none`}>{suitSymbol}</span>
             </div>
 
             {/* Center watermark suit */}
@@ -176,14 +188,14 @@ export const CardView: React.FC<CardViewProps> = ({
             </div>
 
             {/* Bottom-right inverted rank and suit */}
-            <div className={`leading-none flex flex-col items-center rotate-180 ${suitColor}`}>
+            <div className={`leading-none sm:leading-none flex shrink-0 items-center rotate-180 ${cornerLayout} ${suitColor}`}>
               <span className="font-bold tracking-tighter">{rankStr}</span>
-              <span className="text-[10px] sm:text-xs leading-none">{suitSymbol}</span>
+              <span className={`${suitSize} leading-none sm:leading-none`}>{suitSymbol}</span>
             </div>
 
             {/* Hole Card Indicator */}
             {isHole && (
-              <div className="hole-card-indicator absolute top-0 right-0 bg-gold-dark text-[9px] text-slate-950 font-bold px-1 rounded-bl leading-none py-0.5">
+              <div className={`hole-card-indicator absolute right-0 bg-gold-dark text-slate-950 font-bold leading-none ${holeIndicatorLayout}`}>
                 暗
               </div>
             )}
