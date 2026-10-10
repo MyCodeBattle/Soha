@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, BookOpen, Users, Play, PlusCircle } from 'lucide-react';
+import { Volume2, VolumeX, BookOpen, Users, Play, PlusCircle, Dice5 } from 'lucide-react';
 import { sound } from '../utils/audio.js';
 import { RulesModal } from './RulesModal.js';
 import { FullscreenButton } from './FullscreenButton.js';
@@ -7,6 +7,7 @@ import { FullscreenButton } from './FullscreenButton.js';
 interface LobbyProps {
   playerName: string;
   onNameChange: (name: string) => void;
+  onRandomName: () => void;
   onCreateRoom: (ante: number) => void;
   onJoinRoom: (roomId: string) => void;
   isConnecting: boolean;
@@ -16,6 +17,7 @@ interface LobbyProps {
 export const Lobby: React.FC<LobbyProps> = ({
   playerName,
   onNameChange,
+  onRandomName,
   onCreateRoom,
   onJoinRoom,
   isConnecting,
@@ -71,17 +73,29 @@ export const Lobby: React.FC<LobbyProps> = ({
       <main className="lobby-main max-w-md w-full mx-auto my-auto flex flex-col gap-6 py-6">
         {/* Nickname Card */}
         <div className="nickname-panel bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
-          <label className="block text-xs font-semibold text-slate-400 mb-2">
+          <label htmlFor="player-nickname" className="block text-xs font-semibold text-slate-400 mb-2">
             你的昵称
           </label>
-          <input
-            type="text"
-            value={playerName}
-            maxLength={12}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="输入玩家昵称..."
-            className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition"
-          />
+          <div className="flex items-stretch gap-2">
+            <input
+              id="player-nickname"
+              type="text"
+              value={playerName}
+              maxLength={12}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="输入玩家昵称..."
+              className="min-w-0 flex-1 bg-slate-950 border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl px-4 py-2.5 text-sm font-semibold outline-none transition"
+            />
+            <button
+              type="button"
+              onClick={onRandomName}
+              aria-label="随机换一个昵称"
+              className="flex shrink-0 items-center justify-center gap-1.5 min-h-11 px-3 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-xl text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
+              <Dice5 className="w-4 h-4" aria-hidden="true" />
+              <span>随机</span>
+            </button>
+          </div>
         </div>
 
         {error && (

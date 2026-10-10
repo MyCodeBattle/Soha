@@ -6,11 +6,16 @@ import { Lobby } from './components/Lobby.js';
 import { Table } from './components/Table.js';
 import type { RoomEntryResult } from '../../server/src/room-registry.js';
 import { buildInviteUrl } from './utils/invitation.js';
+import { generateRandomNickname } from './utils/nickname.js';
 
 export const App: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [playerName, setPlayerName] = useState<string>(() => {
-    return localStorage.getItem('soha_name') || `赌侠${Math.floor(Math.random() * 900 + 100)}`;
+    const existing = localStorage.getItem('soha_name');
+    if (existing) return existing;
+    const name = generateRandomNickname();
+    localStorage.setItem('soha_name', name);
+    return name;
   });
   const [playerId, setPlayerId] = useState<string>(() => {
     const existing = localStorage.getItem('soha_pid');
@@ -184,6 +189,7 @@ export const App: React.FC = () => {
     <Lobby
       playerName={playerName}
       onNameChange={handleNameChange}
+      onRandomName={() => handleNameChange(generateRandomNickname(playerName))}
       onCreateRoom={handleCreateRoom}
       onJoinRoom={handleJoinRoom}
       isConnecting={isConnecting}
