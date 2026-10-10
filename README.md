@@ -45,11 +45,12 @@ npm run test:layout -w @soha/client
 ```
 
 ### 3. 开发模式
-启动前端 Vite 开发服务器（http://localhost:3000）与后端 Socket 服务（http://localhost:3001）：
+启动前端 Vite 开发服务器（端口 3000）与后端 Socket 服务（端口 3001）：
 ```bash
 # 同时启动前后端开发服务
 npm run dev
 ```
+同一局域网内的其他设备打开 `http://<运行游戏的电脑的局域网IP>:3000`，例如 `http://192.168.1.23:3000`。两台设备须连接同一 Wi-Fi，且路由器不能开启客户端隔离。macOS 可在「系统设置 → 网络」查看电脑的 IP 地址；首次弹出防火墙提示时，允许 Node.js 接受传入连接。
 
 ### 4. 生产环境构建与启动（适合服务器部署）
 ```bash
@@ -57,6 +58,6 @@ npm run dev
 npm run build
 
 # 启动单体服务器（默认端口 3001）
-PORT=3001 npm run dev:server
+npm run start -w @soha/server
 ```
-打开浏览器访问 `http://<你的服务器IP>:3001` 即可开始多人对战。
+同一局域网内的设备打开 `http://<运行游戏的电脑的局域网IP>:3001` 即可开始多人对战。分享房间链接时，也请使用这个局域网 IP，不要使用 `localhost`；`localhost` 在手机上指的是手机自己。
