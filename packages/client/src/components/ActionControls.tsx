@@ -39,15 +39,21 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   };
 
   return (
-    <div className={`action-controls w-full max-w-xl mx-auto bg-slate-900/95 border border-amber-500/30 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-2xl flex flex-col gap-3 ${hasAmountPicker ? 'has-amount-picker' : ''}`}>
+    <div
+      className={`action-controls w-full max-w-xl mx-auto bg-slate-900/95 border border-amber-500/30 backdrop-blur-md rounded-2xl shadow-2xl ${hasAmountPicker ? 'has-amount-picker' : ''}`}
+    >
       {/* Bet / Raise Slider if Bet or Raise is possible */}
       {hasAmountPicker && (
-        <div className="betting-controls flex flex-col gap-1.5">
+        <div className="betting-controls flex flex-col">
           <div className="flex justify-between items-center text-xs text-slate-300 font-medium px-1">
             <span>{isBetting ? '下注金额' : '加注至'}</span>
             <div className="flex items-center gap-1">
-              <span className="text-amber-400 font-bold text-sm sm:text-base">${amount}</span>
-              <span className="text-slate-400 text-xs">/ 最大 ${maxAmount}</span>
+              <span className="text-amber-400 font-bold text-sm sm:text-base">
+                ${amount}
+              </span>
+              <span className="text-slate-400 text-xs">
+                / 最大 ${maxAmount}
+              </span>
             </div>
           </div>
 
@@ -62,7 +68,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           />
 
           {/* Quick presets */}
-          <div className="preset-buttons grid grid-cols-4 gap-1.5 pt-1 text-xs">
+          <div className="preset-buttons grid grid-cols-4 text-xs">
             <button
               onClick={() => setAmount(minAmount)}
               className="py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-semibold transition"
@@ -92,7 +98,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
       )}
 
       {/* Main Action Buttons */}
-      <div className="action-buttons grid grid-cols-4 gap-2">
+      <div className="action-buttons grid grid-cols-4">
         {/* FOLD */}
         <button
           onClick={() => handleAction({ type: 'FOLD' })}
@@ -133,7 +139,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
           </button>
         ) : isRaising ? (
           <button
-            disabled={amount <= (minAmount - 1)}
+            disabled={amount <= minAmount - 1}
             onClick={() => handleAction({ type: 'RAISE', amount })}
             className="flex flex-col items-center justify-center py-2.5 px-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-40 text-white rounded-xl font-bold transition active:scale-95 text-xs sm:text-sm shadow-lg shadow-amber-950"
           >

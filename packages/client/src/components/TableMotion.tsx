@@ -5,7 +5,9 @@ import { CardView } from './CardView.js';
 const EASE_OUT = 'cubic-bezier(0.23, 1, 0.32, 1)';
 
 function reduceMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  return (
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+  );
 }
 
 interface DealtCardProps {
@@ -40,13 +42,24 @@ export const DealtCard: React.FC<DealtCardProps> = ({
       const source = deckRef.current?.getBoundingClientRect();
       const destination = element.getBoundingClientRect();
       if (!source) return;
-      const dx = source.left + source.width / 2 - destination.left - destination.width / 2;
-      const dy = source.top + source.height / 2 - destination.top - destination.height / 2;
+      const dx =
+        source.left +
+        source.width / 2 -
+        destination.left -
+        destination.width / 2;
+      const dy =
+        source.top +
+        source.height / 2 -
+        destination.top -
+        destination.height / 2;
       animation = element.animate(
         reduced
           ? [{ opacity: 0.35 }, { opacity: 1 }]
           : [
-              { transform: `translate(${dx}px, ${dy}px) rotate(-7deg) scale(0.94)`, opacity: 0.8 },
+              {
+                transform: `translate(${dx}px, ${dy}px) rotate(-7deg) scale(0.94)`,
+                opacity: 0.8,
+              },
               { transform: 'translate(0, 0) rotate(0) scale(1)', opacity: 1 },
             ],
         { duration: 220, easing: EASE_OUT }
@@ -55,7 +68,10 @@ export const DealtCard: React.FC<DealtCardProps> = ({
       animation = element.animate(
         reduced
           ? [{ opacity: 0.35 }, { opacity: 1 }]
-          : [{ transform: 'rotateY(-85deg)', opacity: 0.65 }, { transform: 'rotateY(0)', opacity: 1 }],
+          : [
+              { transform: 'rotateY(-85deg)', opacity: 0.65 },
+              { transform: 'rotateY(0)', opacity: 1 },
+            ],
         { duration: 260, easing: EASE_OUT }
       );
     }
@@ -63,7 +79,11 @@ export const DealtCard: React.FC<DealtCardProps> = ({
   }, [animateDeal, animateFlip, deckRef, sequence]);
 
   return (
-    <div ref={ref} className="relative shrink-0" style={{ backfaceVisibility: 'hidden' }}>
+    <div
+      ref={ref}
+      className="relative shrink-0"
+      style={{ backfaceVisibility: 'hidden' }}
+    >
       <CardView card={card} size={size} isHole={isHole} canPeek={canPeek} />
     </div>
   );
@@ -75,14 +95,21 @@ interface ChipFlightProps {
   sequence: number;
 }
 
-export const ChipFlight: React.FC<ChipFlightProps> = ({ playerId, towardPot, sequence }) => {
+export const ChipFlight: React.FC<ChipFlightProps> = ({
+  playerId,
+  towardPot,
+  sequence,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const element = ref.current;
-    const seat = [...document.querySelectorAll<HTMLElement>('[data-seat-id]')]
-      .find((candidate) => candidate.dataset.seatId === playerId);
-    const pot = document.querySelector<HTMLElement>('[data-pot]');
+    const seat = [
+      ...document.querySelectorAll<HTMLElement>('[data-seat-id]'),
+    ].find((candidate) => candidate.dataset.seatId === playerId);
+    const pot = [...document.querySelectorAll<HTMLElement>('[data-pot]')].find(
+      (candidate) => candidate.offsetWidth > 0 && candidate.offsetHeight > 0
+    );
     if (!element || !seat || !pot) return;
     const from = (towardPot ? seat : pot).getBoundingClientRect();
     const to = (towardPot ? pot : seat).getBoundingClientRect();
@@ -97,11 +124,16 @@ export const ChipFlight: React.FC<ChipFlightProps> = ({ playerId, towardPot, seq
         ? [{ opacity: 0 }, { opacity: 1 }, { opacity: 0 }]
         : [
             { transform: 'translate(0, 0) scale(1)', opacity: 0.95 },
-            { transform: `translate(${dx}px, ${dy}px) scale(0.9)`, opacity: 0.95 },
+            {
+              transform: `translate(${dx}px, ${dy}px) scale(0.9)`,
+              opacity: 0.95,
+            },
           ],
       { duration: 220, easing: EASE_OUT }
     );
-    animation.onfinish = () => { element.style.opacity = '0'; };
+    animation.onfinish = () => {
+      element.style.opacity = '0';
+    };
     return () => animation.cancel();
   }, [playerId, towardPot, sequence]);
 
